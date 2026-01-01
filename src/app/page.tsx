@@ -114,9 +114,12 @@ export default function Home() {
       <div className="absolute top-0 left-0 right-0 p-4 z-10 flex flex-col gap-3">
         {/* Header/Branding */}
         <div className="flex items-center justify-between pointer-events-none">
-          <h1 className="text-2xl font-bold text-maahi-brand bg-white/90 backdrop-blur-sm px-4 py-1 rounded-full shadow-sm pointer-events-auto">
-            Maahi<span className="text-maahi-accent">Cabs</span>
-          </h1>
+          <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-sm pointer-events-auto">
+            <img src="/android-chrome-192x192.png" alt="Logo" className="w-6 h-6 rounded-md" />
+            <h1 className="text-xl font-bold text-maahi-brand leading-none">
+              Maahi<span className="text-maahi-accent">Cabs</span>
+            </h1>
+          </div>
 
           <div className="pointer-events-auto flex items-center gap-2">
             {user ? (

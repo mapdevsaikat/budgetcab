@@ -93,8 +93,12 @@ export default function OnboardingPage() {
 
                 {/* Header */}
                 <div className="text-center space-y-2">
-                    <div className="inline-block p-4 bg-maahi-brand/10 rounded-full mb-2">
-                        <User className="w-8 h-8 text-maahi-brand" />
+                    <div className="relative w-20 h-20 mx-auto mb-2">
+                        <img
+                            src="/android-chrome-192x192.png"
+                            alt="MaahiCabs Logo"
+                            className="w-full h-full object-contain rounded-xl shadow-sm"
+                        />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">
                         {isLogin ? 'Welcome Back' : 'Join MaahiCabs'}

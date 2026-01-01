@@ -16,16 +16,31 @@ const Map: React.FC<MapProps> = ({ center = [87.9127426, 22.1700725], zoom = 14,
     const map = useRef<maplibregl.Map | null>(null);
     const [mounted, setMounted] = React.useState(false);
 
+    // Store callbacks in refs to avoid re-triggering useEffect
+    const onMoveEndRef = useRef(onMoveEnd);
+    const onLoadRef = useRef(onLoad);
+
+    // Update refs when callbacks change
+    useEffect(() => {
+        onMoveEndRef.current = onMoveEnd;
+        onLoadRef.current = onLoad;
+    }, [onMoveEnd, onLoad]);
+
     useEffect(() => {
         setMounted(true);
     }, []);
 
     useEffect(() => {
+        // Only initialize once
         if (!mounted || map.current) return;
 
         const apiKey = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+
+        console.log('[MaahiCabs Map] Initializing map...');
+        console.log('[MaahiCabs Map] API Key present:', !!apiKey);
+
         const styleUrl = apiKey
-            ? `https://api.maptiler.com/maps/streets-v4/style.json?key=${apiKey}`
+            ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`
             : 'https://demotiles.maplibre.org/style.json';
 
         if (mapContainer.current) {
@@ -38,7 +53,10 @@ const Map: React.FC<MapProps> = ({ center = [87.9127426, 22.1700725], zoom = 14,
                     attributionControl: false,
                 });
 
-                // clean controls
+                map.current.on('error', (e) => {
+                    console.error('[MaahiCabs Map] Map error:', e.error);
+                });
+
                 map.current.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
                 const geolocate = new maplibregl.GeolocateControl({
@@ -50,42 +68,43 @@ const Map: React.FC<MapProps> = ({ center = [87.9127426, 22.1700725], zoom = 14,
                 map.current.addControl(geolocate, 'top-right');
 
                 map.current.on('load', () => {
-                    // 1. Fire onMoveEnd immediately to set initial center in parent
-                    if (onMoveEnd) {
+                    console.log('[MaahiCabs Map] Map loaded successfully!');
+
+                    if (onMoveEndRef.current) {
                         const { lng, lat } = map.current!.getCenter();
-                        onMoveEnd({ lat, lng });
+                        onMoveEndRef.current({ lat, lng });
                     }
 
-                    // 2. Try to auto-locate
                     geolocate.trigger();
 
-                    if (onLoad) onLoad();
+                    if (onLoadRef.current) onLoadRef.current();
                 });
 
-                if (onMoveEnd) {
-                    map.current.on('moveend', () => {
+                map.current.on('moveend', () => {
+                    if (onMoveEndRef.current) {
                         const { lng, lat } = map.current!.getCenter();
-                        onMoveEnd({ lat, lng });
-                    });
-                }
+                        onMoveEndRef.current({ lat, lng });
+                    }
+                });
 
             } catch (err) {
-                console.error('Error initializing map:', err);
+                console.error('[MaahiCabs Map] Error initializing map:', err);
             }
         }
 
         return () => {
-            map.current?.remove();
-            map.current = null;
+            if (map.current) {
+                map.current.remove();
+                map.current = null;
+            }
         };
-    }, [mounted, center, zoom]); // careful with deps here to avoid re-init
+    }, [mounted]); // Only depend on mounted - center/zoom are initial values only
 
     if (!mounted) return <div className="w-full h-full bg-gray-100 animate-pulse" />;
 
     return (
         <div className="relative w-full h-full">
             <div ref={mapContainer} className="absolute inset-0" />
-            {/* Attribution fallback if needed */}
             <div className="absolute bottom-1 right-1 text-[10px] text-gray-400 bg-white/80 px-1 rounded pointer-events-none">
                 © MapLibre © MapTiler © OpenStreetMap
             </div>
