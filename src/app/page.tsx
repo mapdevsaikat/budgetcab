@@ -11,7 +11,7 @@ import LocationSearch from '@/components/LocationSearch';
 import BottomSheet from '@/components/BottomSheet';
 import NotificationModal from '@/components/NotificationModal';
 import { useBookingStore } from '@/store/useBookingStore';
-import { Calendar, Clock, ArrowRight, LogOut, User as UserIcon, Navigation, ChevronDown, X, Edit2 } from 'lucide-react';
+import { Calendar, Clock, ArrowRight, LogOut, User as UserIcon, Navigation, ChevronDown, X, Edit2, Home as HomeIcon, Briefcase } from 'lucide-react';
 import { User } from '@supabase/supabase-js';
 import L from 'leaflet';
 import { generateBookingRef, calculateFare } from '@/lib/booking';
@@ -31,6 +31,12 @@ export default function Home() {
   const [isAdjustingDestination, setIsAdjustingDestination] = useState(false);
   const [tempDestination, setTempDestination] = useState<any>(null);
   const [highlightDropoff, setHighlightDropoff] = useState(false);
+  
+  // Saved addresses state
+  const [savedAddresses, setSavedAddresses] = useState<{
+    home: any | null;
+    work: any | null;
+  }>({ home: null, work: null });
 
   // Auth State
   const [user, setUser] = useState<User | null>(null);
@@ -67,6 +73,7 @@ export default function Home() {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+        fetchSavedAddresses(session.user.id);
         checkActiveBooking(session.user.id);
       }
     });
@@ -76,9 +83,11 @@ export default function Home() {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+        fetchSavedAddresses(session.user.id);
         checkActiveBooking(session.user.id);
       } else {
         setProfile(null);
+        setSavedAddresses({ home: null, work: null });
       }
     });
 
@@ -135,6 +144,32 @@ export default function Home() {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     if (data) setProfile(data);
+  };
+
+  const fetchSavedAddresses = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_addresses')
+        .select('*')
+        .eq('user_id', userId)
+        .in('address_type', ['home', 'work'])
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching saved addresses:', error);
+        return;
+      }
+
+      if (data) {
+        const addresses = {
+          home: data.find((addr) => addr.address_type === 'home') || null,
+          work: data.find((addr) => addr.address_type === 'work') || null,
+        };
+        setSavedAddresses(addresses);
+      }
+    } catch (error) {
+      console.error('Failed to fetch saved addresses:', error);
+    }
   };
 
   const checkActiveBooking = async (userId: string) => {
@@ -523,6 +558,11 @@ export default function Home() {
       // LOCK the pickup location
       lockPickup();
 
+      // Refresh saved addresses when pickup is locked (in case user added/updated them)
+      if (user) {
+        fetchSavedAddresses(user.id);
+      }
+
       // Highlight drop-off field to guide user
       setHighlightDropoff(true);
       // Auto-remove highlight after 5 seconds
@@ -773,8 +813,95 @@ export default function Home() {
                 }
               }}
             />
-            {/* Hint message when pickup is locked but drop-off not selected */}
-            {pickupLocked && !drop && !isAdjustingDestination && (
+            
+            {/* Quick-select buttons for saved addresses - Below destination search */}
+            {pickupLocked && !isAdjustingDestination && !drop && (savedAddresses.home || savedAddresses.work) && (
+              <div className="mt-2 space-y-1">
+                {savedAddresses.home && (
+                  <button
+                    onClick={() => {
+                      const homeAddr = savedAddresses.home;
+                      const fullAddress = `${homeAddr.house_road_name}${homeAddr.locality ? `, ${homeAddr.locality}` : ''}`;
+                      const destination = {
+                        latitude: homeAddr.latitude,
+                        longitude: homeAddr.longitude,
+                        address: fullAddress,
+                        digipin: homeAddr.digipin || '',
+                        locality: homeAddr.locality,
+                        pincode: homeAddr.pincode,
+                        district: homeAddr.district,
+                        state: homeAddr.state,
+                      };
+                      
+                      // Fly to home location
+                      if (mapInstanceRef.current) {
+                        mapInstanceRef.current.flyTo([homeAddr.latitude, homeAddr.longitude], 16, {
+                          duration: 1.5,
+                          easeLinearity: 0.25
+                        });
+                      }
+                      
+                      setTempDestination(destination);
+                      setIsAdjustingDestination(true);
+                      setHighlightDropoff(false);
+                      console.log('Selected Home address:', destination);
+                    }}
+                    className="w-full flex items-center gap-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 px-4 py-3 hover:shadow-lg hover:bg-white transition-all active:scale-[0.98] text-left"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                      <HomeIcon className="w-5 h-5 text-maahi-brand" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-gray-800">Home</p>
+                      <p className="text-xs text-gray-500 truncate">{savedAddresses.home?.house_road_name}{savedAddresses.home?.locality ? `, ${savedAddresses.home.locality}` : ''}</p>
+                    </div>
+                  </button>
+                )}
+                {savedAddresses.work && (
+                  <button
+                    onClick={() => {
+                      const workAddr = savedAddresses.work;
+                      const fullAddress = `${workAddr.house_road_name}${workAddr.locality ? `, ${workAddr.locality}` : ''}`;
+                      const destination = {
+                        latitude: workAddr.latitude,
+                        longitude: workAddr.longitude,
+                        address: fullAddress,
+                        digipin: workAddr.digipin || '',
+                        locality: workAddr.locality,
+                        pincode: workAddr.pincode,
+                        district: workAddr.district,
+                        state: workAddr.state,
+                      };
+                      
+                      // Fly to work location
+                      if (mapInstanceRef.current) {
+                        mapInstanceRef.current.flyTo([workAddr.latitude, workAddr.longitude], 16, {
+                          duration: 1.5,
+                          easeLinearity: 0.25
+                        });
+                      }
+                      
+                      setTempDestination(destination);
+                      setIsAdjustingDestination(true);
+                      setHighlightDropoff(false);
+                      console.log('Selected Work address:', destination);
+                    }}
+                    className="w-full flex items-center gap-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 px-4 py-3 hover:shadow-lg hover:bg-white transition-all active:scale-[0.98] text-left"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                      <Briefcase className="w-5 h-5 text-maahi-accent" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-gray-800">Work</p>
+                      <p className="text-xs text-gray-500 truncate">{savedAddresses.work?.house_road_name}{savedAddresses.work?.locality ? `, ${savedAddresses.work.locality}` : ''}</p>
+                    </div>
+                  </button>
+                )}
+              </div>
+            )}
+            
+            {/* Hint message when pickup is locked but drop-off not selected and no saved addresses */}
+            {pickupLocked && !drop && !isAdjustingDestination && !savedAddresses.home && !savedAddresses.work && (
               <div className="mt-2 px-3 py-2 bg-maahi-brand/10 border border-maahi-brand/20 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
                 <p className="text-xs text-maahi-brand font-semibold flex items-center gap-2">
                   <span>✨</span>
