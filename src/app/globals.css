@@ -28,3 +28,59 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Safe Area Insets for iOS devices */
+.pt-safe-top {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0.5rem));
+}
+
+@media (min-width: 640px) {
+  .pt-safe-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top, 0.5rem));
+  }
+}
+
+.bottom-safe-bottom {
+  bottom: max(1.25rem, calc(1rem + env(safe-area-inset-bottom, 0px)));
+}
+
+@media (min-width: 640px) {
+  .bottom-safe-bottom {
+    bottom: max(2rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)));
+  }
+}
+
+/* Leaflet Map Custom Styles */
+.leaflet-container {
+  font-family: inherit;
+}
+
+/* Hide Leaflet attribution (we have our own) */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Custom user location marker styles */
+.custom-user-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Ensure map tiles load properly */
+.leaflet-tile-container {
+  pointer-events: none;
+}
+
+/* Custom animations */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}

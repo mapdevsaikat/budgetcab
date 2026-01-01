@@ -3,18 +3,28 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Phone, ArrowRight, X } from 'lucide-react';
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-    return twMerge(clsx(inputs));
-}
+import { Mail, Phone, ArrowRight, X, Eye, EyeOff } from 'lucide-react';
+import SuccessRedirect from '@/components/SuccessRedirect';
+import NotificationModal from '@/components/NotificationModal';
 
 export default function OnboardingPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [isLogin, setIsLogin] = useState(false);
+    const [isLogin, setIsLogin] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [notification, setNotification] = useState<{
+        isOpen: boolean;
+        type: 'success' | 'error' | 'info';
+        title: string;
+        message: string;
+        details?: string;
+    }>({
+        isOpen: false,
+        type: 'info',
+        title: '',
+        message: '',
+    });
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
@@ -27,11 +37,37 @@ export default function OnboardingPage() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const showError = (title: string, message: string, details?: string) => {
+        setNotification({
+            isOpen: true,
+            type: 'error',
+            title,
+            message,
+            details,
+        });
+    };
+
+    const closeNotification = () => {
+        setNotification(prev => ({ ...prev, isOpen: false }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
+            // Check if Supabase is configured
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
+                showError(
+                    'Configuration Error',
+                    'Supabase is not configured.',
+                    'Please set up your environment variables:\n\nRequired:\n- NEXT_PUBLIC_SUPABASE_URL\n- NEXT_PUBLIC_SUPABASE_ANON_KEY'
+                );
+                setLoading(false);
+                return;
+            }
+
             let authResponse;
 
             if (isLogin) {
@@ -59,27 +95,34 @@ export default function OnboardingPage() {
             const { data: authData, error: authError } = authResponse;
 
             if (authError) {
-                alert(`Error: ${authError.message}`);
+                showError('Authentication Error', authError.message);
                 setLoading(false);
                 return;
             }
 
-            // Redirect on success
+            // Show success screen and redirect
             if (authData.user) {
-                setTimeout(() => {
-                    router.push('/');
-                }, 500);
+                setLoading(false);
+                setShowSuccess(true);
             }
 
         } catch (error) {
             console.error('Auth error:', error);
-        } finally {
             setLoading(false);
+            if (error instanceof Error) {
+                showError(
+                    'Unexpected Error',
+                    error.message,
+                    'Please check:\n1. Your internet connection\n2. Supabase credentials are configured\n3. Supabase project is active'
+                );
+            } else {
+                showError('Unexpected Error', 'An unexpected error occurred. Please try again.');
+            }
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 pt-32 sm:pt-6">
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 space-y-6 relative">
 
                 {/* Close Button */}
@@ -119,7 +162,7 @@ export default function OnboardingPage() {
                                     name="first_name"
                                     required={!isLogin}
                                     className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-maahi-brand focus:ring-2 focus:ring-maahi-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-900"
-                                    placeholder="John"
+                                    placeholder="Name"
                                     value={formData.first_name}
                                     onChange={handleChange}
                                 />
@@ -130,7 +173,7 @@ export default function OnboardingPage() {
                                     name="last_name"
                                     required={!isLogin}
                                     className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-maahi-brand focus:ring-2 focus:ring-maahi-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-900"
-                                    placeholder="Doe"
+                                    placeholder="Surname"
                                     value={formData.last_name}
                                     onChange={handleChange}
                                 />
@@ -147,7 +190,7 @@ export default function OnboardingPage() {
                                 type="email"
                                 required
                                 className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-maahi-brand focus:ring-2 focus:ring-maahi-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-900"
-                                placeholder="john.doe@example.com"
+                                placeholder="user.name@example.com"
                                 value={formData.email}
                                 onChange={handleChange}
                             />
@@ -174,15 +217,29 @@ export default function OnboardingPage() {
 
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Password</label>
-                        <input
-                            name="password"
-                            type="password"
-                            required
-                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-maahi-brand focus:ring-2 focus:ring-maahi-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-900"
-                            placeholder="••••••••"
-                            value={formData.password}
-                            onChange={handleChange}
-                        />
+                        <div className="relative">
+                            <input
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                required
+                                className="w-full px-4 py-3 pr-12 rounded-xl bg-gray-50 border border-gray-200 focus:border-maahi-brand focus:ring-2 focus:ring-maahi-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-900"
+                                placeholder="••••••••"
+                                value={formData.password}
+                                onChange={handleChange}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="w-5 h-5" />
+                                ) : (
+                                    <Eye className="w-5 h-5" />
+                                )}
+                            </button>
+                        </div>
                         {/* Helper for prototype */}
                         {!isLogin && <p className="text-[10px] text-gray-400">If left blank, will default to "Maahi" + Mobile</p>}
                     </div>
@@ -212,6 +269,25 @@ export default function OnboardingPage() {
                 </div>
 
             </div>
+
+            {/* Success Redirect Screen */}
+            <SuccessRedirect
+                isOpen={showSuccess}
+                title={`${isLogin ? 'Login' : 'Registration'} Successful!`}
+                message={`Welcome${!isLogin && formData.first_name ? `, ${formData.first_name}` : ''}! You're all set. Redirecting you to the app...`}
+                redirectTo="/"
+                redirectDelay={2000}
+            />
+
+            {/* Error Notification Modal */}
+            <NotificationModal
+                isOpen={notification.isOpen}
+                onClose={closeNotification}
+                type={notification.type}
+                title={notification.title}
+                message={notification.message}
+                details={notification.details}
+            />
         </div>
     );
 }

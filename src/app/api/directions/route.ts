@@ -8,7 +8,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Missing coordinates' }, { status: 400 });
     }
 
-    const mapboxToken = process.env.MAPBOX_ACCESS_TOKEN;
+    const mapboxToken = process.env.MAPBOX_API_KEY;
 
     try {
         const response = await fetch(
