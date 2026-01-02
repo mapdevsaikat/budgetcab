@@ -17,6 +17,12 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<L.Map | null>(null);
     const userMarker = useRef<L.Marker | null>(null);
+    const userLocationSetRef = useRef<boolean>(false);
+    const isAutoCenteringRef = useRef<boolean>(false);
+    const userHasInteractedRef = useRef<boolean>(false); // Track if user has moved map manually
+    const isCheckingLocationRef = useRef<boolean>(false); // Track if we're checking for user location
+    const mapLoadedRef = useRef<boolean>(false);
+    const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [mounted, setMounted] = useState(false);
     const [mapLoaded, setMapLoaded] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -61,65 +67,26 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
                 center: L.latLng(center[0], center[1]),
                 zoom: zoom,
                 zoomControl: false, // Disable default zoom control
+                minZoom: 11, // Restrict zoom out to level 12 to avoid border issues
+                maxZoom: 20, // Set reasonable max zoom
             });
 
             // Add MapTiler layer using the MaptilerLayer class
             const mtLayer = new MaptilerLayer({
                 apiKey: apiKey,
             }).addTo(map.current);
-
-            // Create custom user location marker icon (matching app theme)
-            const createUserLocationIcon = () => {
-                const iconHtml = `
-                    <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                        <!-- Outer pulse ring -->
-                        <div style="
-                            position: absolute;
-                            width: 100%;
-                            height: 100%;
-                            border-radius: 50%;
-                            background: #2E3192;
-                            opacity: 0.3;
-                            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-                        "></div>
-                        <!-- Inner solid circle -->
-                        <div style="
-                            position: relative;
-                            width: 16px;
-                            height: 16px;
-                            border-radius: 50%;
-                            background: #2E3192;
-                            border: 3px solid white;
-                            box-shadow: 0 2px 8px rgba(46, 49, 146, 0.4);
-                        "></div>
-                    </div>
-                    <style>
-                        @keyframes pulse {
-                            0%, 100% {
-                                transform: scale(1);
-                                opacity: 0.3;
-                            }
-                            50% {
-                                transform: scale(1.2);
-                                opacity: 0.1;
-                            }
-                        }
-                    </style>
-                `;
-
-                return L.divIcon({
-                    html: iconHtml,
-                    className: 'custom-user-marker',
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20],
-                });
-            };
-
             // Setup event listeners
             map.current.on('load', () => {
                 console.log('[MaahiCabs Map] Map loaded successfully!');
+                mapLoadedRef.current = true;
                 setMapLoaded(true);
                 setError(null);
+                
+                // Clear timeout if map loads successfully
+                if (loadTimeoutRef.current) {
+                    clearTimeout(loadTimeoutRef.current);
+                    loadTimeoutRef.current = null;
+                }
 
                 if (onMoveEndRef.current && map.current) {
                     const center = map.current.getCenter();
@@ -131,7 +98,19 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
                 }
             });
 
+            map.current.on('movestart', () => {
+                // Mark that user has manually moved the map (unless it's auto-centering)
+                if (!isAutoCenteringRef.current) {
+                    userHasInteractedRef.current = true;
+                    console.log('[MaahiCabs Map] User manually moved map');
+                }
+            });
+
             map.current.on('moveend', () => {
+                // Don't trigger onMoveEnd during auto-centering or location checking to prevent conflicts
+                if (isAutoCenteringRef.current || isCheckingLocationRef.current) {
+                    return;
+                }
                 if (onMoveEndRef.current && map.current) {
                     const center = map.current.getCenter();
                     onMoveEndRef.current({ lat: center.lat, lng: center.lng });
@@ -141,14 +120,18 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
             // For Leaflet, the map is ready after a short delay
             setTimeout(() => {
                 console.log('[MaahiCabs Map] Map ready!');
+                mapLoadedRef.current = true;
                 setMapLoaded(true);
                 setError(null);
-
-                if (onMoveEndRef.current && map.current) {
-                    const center = map.current.getCenter();
-                    onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                
+                // Clear timeout if map loads successfully
+                if (loadTimeoutRef.current) {
+                    clearTimeout(loadTimeoutRef.current);
+                    loadTimeoutRef.current = null;
                 }
 
+                // Don't call onMoveEnd here - wait for user location check to complete
+                // This prevents setting mapCenter to default location before user location is checked
                 if (onLoadRef.current) {
                     onLoadRef.current();
                 }
@@ -157,43 +140,16 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
                 if (onMapReadyRef.current && map.current) {
                     onMapReadyRef.current(map.current);
                 }
-
-                // Auto-center on user location (no marker, just center the map)
-                if (map.current && 'geolocation' in navigator) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            if (map.current) {
-                                const { latitude, longitude } = position.coords;
-                                map.current.flyTo([latitude, longitude], 16, {
-                                    duration: 2,
-                                    easeLinearity: 0.25
-                                });
-                                console.log('[MaahiCabs Map] Centered on user location');
-                            }
-                        },
-                        (error) => {
-                            console.warn('[MaahiCabs Map] Geolocation error:', error.message);
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 5000,
-                            maximumAge: 0,
-                        }
-                    );
-                }
             }, 500);
 
             // Add a timeout to detect if map doesn't load
-            const loadTimeout = setTimeout(() => {
-                if (!mapLoaded) {
+            // Use ref to check current state, not closure
+            loadTimeoutRef.current = setTimeout(() => {
+                if (!mapLoadedRef.current) {
                     console.error('[MaahiCabs Map] Map loading timeout');
                     setError('Map loading timeout. Please check your API key and internet connection.');
                 }
             }, 10000);
-
-            return () => {
-                clearTimeout(loadTimeout);
-            };
 
         } catch (err) {
             console.error('[MaahiCabs Map] Error initializing map:', err);
@@ -201,6 +157,12 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
         }
 
         return () => {
+            // Clear timeout on cleanup
+            if (loadTimeoutRef.current) {
+                clearTimeout(loadTimeoutRef.current);
+                loadTimeoutRef.current = null;
+            }
+            
             if (map.current) {
                 console.log('[MaahiCabs Map] Cleaning up map instance');
                 if (userMarker.current) {
@@ -210,8 +172,108 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
                 map.current.remove();
                 map.current = null;
             }
+            
+            // Reset refs
+            mapLoadedRef.current = false;
+            userLocationSetRef.current = false;
+            isAutoCenteringRef.current = false;
+            userHasInteractedRef.current = false;
+            isCheckingLocationRef.current = false;
         };
-    }, [mounted, center, zoom]);
+    }, [mounted]); // Removed center and zoom from dependencies to prevent re-initialization
+
+    // Separate effect: Request user location and flyTo after map is loaded
+    useEffect(() => {
+        // Only proceed if map is loaded and we haven't already requested location
+        if (!mapLoaded || !map.current || userLocationSetRef.current) return;
+
+        // Check if geolocation is available
+        if (!('geolocation' in navigator)) {
+            console.log('[MaahiCabs Map] Geolocation not available in this browser');
+            // No location available, set map center to default
+            if (onMoveEndRef.current && map.current) {
+                const center = map.current.getCenter();
+                onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+            }
+            return;
+        }
+
+        console.log('[MaahiCabs Map] Requesting user location after map load...');
+        isCheckingLocationRef.current = true; // Start location check, prevent moveend events
+        
+        // Request user location permission and flyTo when granted
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                if (!map.current || userLocationSetRef.current) {
+                    isCheckingLocationRef.current = false;
+                    return;
+                }
+                
+                const { latitude, longitude } = position.coords;
+                userLocationSetRef.current = true;
+                
+                console.log('[MaahiCabs Map] Location permission granted, user location:', latitude, longitude);
+                
+                // Only fly to user location if they haven't manually interacted with the map yet
+                if (userHasInteractedRef.current) {
+                    console.log('[MaahiCabs Map] User has already interacted with map, skipping auto-center');
+                    isCheckingLocationRef.current = false;
+                    // Set mapCenter to current location
+                    if (onMoveEndRef.current && map.current) {
+                        const center = map.current.getCenter();
+                        onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                    }
+                    return;
+                }
+                
+                isAutoCenteringRef.current = true;
+                console.log('[MaahiCabs Map] Flying to user location...');
+                
+                // Use setView with animation for smooth transition to user location
+                // Check if flyTo method exists (might be from a plugin), otherwise use setView
+                if (typeof (map.current as any).flyTo === 'function') {
+                    (map.current as any).flyTo([latitude, longitude], 16, {
+                        duration: 1.5,
+                        easeLinearity: 0.25
+                    });
+                } else {
+                    map.current.setView([latitude, longitude], 16, {
+                        animate: true,
+                        duration: 1.5,
+                        easeLinearity: 0.25
+                    });
+                }
+                
+                // Update parent's mapCenter state after animation completes
+                setTimeout(() => {
+                    isAutoCenteringRef.current = false;
+                    isCheckingLocationRef.current = false; // Location check complete
+                    if (onMoveEndRef.current && map.current) {
+                        const center = map.current.getCenter();
+                        onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                    }
+                    console.log('[MaahiCabs Map] Successfully centered on user location');
+                }, 1600); // Wait for animation to complete (1500ms + 100ms buffer)
+            },
+            (error) => {
+                console.warn('[MaahiCabs Map] Geolocation error:', error.message);
+                // Mark as attempted so we don't keep trying
+                userLocationSetRef.current = true;
+                isCheckingLocationRef.current = false; // Location check complete (failed)
+                
+                // Set mapCenter to default location since user location failed
+                if (onMoveEndRef.current && map.current) {
+                    const center = map.current.getCenter();
+                    onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000, // Increased timeout to give user time to grant permission
+                maximumAge: 0,
+            }
+        );
+    }, [mapLoaded]); // Only run when mapLoaded changes from false to true
 
     if (!mounted) {
         return (

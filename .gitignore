@@ -43,3 +43,7 @@ next-env.d.ts
 #project files
 .specstory
 .specstory/*
+context.md
+docs/
+docs/*
+docs/migrations/*

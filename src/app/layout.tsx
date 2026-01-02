@@ -21,8 +21,34 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "MaahiCabs - Ride with Comfort",
-  description: "Your trusted cab booking partner",
+  title: "MaahiCabs | Safe & Reliable Female-Only Cab Service in Bengaluru",
+  description: "Book MaahiCabs for a safe, female-only taxi experience in Bengaluru. Founded by Maahi Narender, providing trusted rides with verified woman partners. Call or WhatsApp 9535238661.",
+  keywords: ["female only cabs Bengaluru", "safe taxi for women Bangalore", "MaahiCabs", "women driven cabs", "ladies taxi service Bengaluru", "Maahi Narender"],
+  authors: [{ name: "Maahi Narender" }],
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    type: "website",
+    url: "https://www.maahicabs.com/",
+    title: "MaahiCabs - Empowering Women's Travel in Bengaluru",
+    description: "By women, for women. Experience the safest cab service in Bengaluru. Book your ride today.",
+    images: [
+      {
+        url: "/android-chrome-512x512.png",
+        width: 512,
+        height: 512,
+        alt: "MaahiCabs Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MaahiCabs | Female-Only Cabs Bengaluru",
+    description: "Safe, professional, and reliable female-only cab service in Bengaluru. 24/7 availability.",
+    images: ["/android-chrome-512x512.png"],
+  },
   icons: {
     icon: [
       { url: '/favicon.ico' },
@@ -44,12 +70,53 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "TaxiService",
+    "name": "MaahiCabs",
+    "description": "A premium female-only cab service operating in the Bengaluru area, ensuring safety and empowerment for women travelers.",
+    "provider": {
+      "@type": "LocalBusiness",
+      "name": "MaahiCabs",
+      "image": "https://www.maahicabs.com/android-chrome-512x512.png",
+      "telePhone": "+91-9535238661",
+      "priceRange": "₹₹",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Bengaluru",
+        "addressRegion": "Karnataka",
+        "addressCountry": "IN"
+      }
+    },
+    "areaServed": {
+      "@type": "City",
+      "name": "Bengaluru"
+    },
+    "founder": {
+      "@type": "Person",
+      "name": "Maahi Narender"
+    },
+    "sameAs": [
+      "https://www.instagram.com/_maahi_cabs/"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+91-9535238661",
+      "contactType": "booking and customer service",
+      "availableLanguage": ["English", "Hindi", "Kannada"]
+    }
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <EnvWarningBanner />
         {children}
       </body>

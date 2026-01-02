@@ -160,3 +160,113 @@ DigiPin:
 2P7-CC7-T678
 If we do not find the exact location, we will use the suitable address components to set the actual location of the Destination.
 We will follow the uber like mechanism, once user hit the comfim location then only we will hit the api end point to necessary address as per out table to make the insert.
+
+## 9. SEO
+To make **MaahiCabs** visible to search engines (Google) and AI discovery tools (like ChatGPT, Gemini, and Perplexity), you need a mix of standard meta tags and **JSON-LD Structured Data**.
+
+Since your service is a **Local Business** in **Bengaluru**, these tags are optimized for local SEO.
+
+### 1. Standard SEO Meta Tags
+
+Place these inside the `<head>` tag of your `layout.tsx` or `index.html`.
+
+```html
+<title>MaahiCabs | Safe & Reliable Female-Only Cab Service in Bengaluru</title>
+<meta name="title" content="MaahiCabs | Safe & Reliable Female-Only Cab Service in Bengaluru">
+<meta name="description" content="Book MaahiCabs for a safe, female-only taxi experience in Bengaluru. Founded by Maahi Narender, providing trusted rides with verified woman partners. Call or WhatsApp 9535238661.">
+<meta name="keywords" content="female only cabs Bengaluru, safe taxi for women Bangalore, MaahiCabs, women driven cabs, ladies taxi service Bengaluru, Maahi Narender">
+<meta name="author" content="Maahi Narender">
+<meta name="robots" content="index, follow">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.maahicabs.com/"> <meta property="og:title" content="MaahiCabs - Empowering Women's Travel in Bengaluru">
+<meta property="og:description" content="By women, for women. Experience the safest cab service in Bengaluru. Book your ride today.">
+<meta property="og:image" content="/logo-for-social.png"> <meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:title" content="MaahiCabs | Female-Only Cabs Bengaluru">
+<meta property="twitter:description" content="Safe, professional, and reliable female-only cab service in Bengaluru. 24/7 availability.">
+
+```
+
+---
+
+### 2. AI-Friendly Structured Data (JSON-LD)
+
+This is the most important part for **AI visibility**. It tells AI bots exactly what your business is, who the owner is, and where you operate.
+
+Add this script inside your `<head>`:
+
+```html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TaxiService",
+  "name": "MaahiCabs",
+  "description": "A premium female-only cab service operating in the Bengaluru area, ensuring safety and empowerment for women travelers.",
+  "provider": {
+    "@type": "LocalBusiness",
+    "name": "MaahiCabs",
+    "image": "https://www.maahicabs.com/logo.png",
+    "telePhone": "+91-9535238661",
+    "priceRange": "₹₹",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Bengaluru",
+      "addressRegion": "Karnataka",
+      "addressCountry": "IN"
+    }
+  },
+  "areaServed": {
+    "@type": "City",
+    "name": "Bengaluru"
+  },
+  "founder": {
+    "@type": "Person",
+    "name": "Maahi Narender"
+  },
+  "sameAs": [
+    "https://www.instagram.com/_maahi_cabs/"
+  ],
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+91-9535238661",
+    "contactType": "booking and customer service",
+    "availableLanguage": ["English", "Hindi", "Kannada"]
+  }
+}
+</script>
+
+```
+
+---
+
+### 3. Verification & AI Discovery Files
+
+To ensure AI bots crawl your site correctly, create these two files in your `public/` folder:
+
+**A. `robots.txt**`
+
+```text
+User-agent: *
+Allow: /
+
+Sitemap: https://www.maahicabs.com/sitemap.xml
+
+```
+
+**B. WhatsApp Click-to-Action (For the UI)**
+Since you provided a mobile number, your "Book Now" button should be AI-recognizable as a contact method.
+
+```html
+<a href="https://wa.me/919535238661?text=Hi%20MaahiCabs,%20I%20want%20to%20book%20a%20ride" 
+   class="bg-[#00A99D] text-white p-4 rounded-lg">
+   Book via WhatsApp
+</a>
+
+```
+
+### Why this works:
+
+1. **Local Keywords:** It repeats "Bengaluru" and "Safe" which are high-volume search terms for taxi services in that area.
+2. **Schema.org:** Using `@type: TaxiService` tells Google exactly what service to list you under in Google Maps and Search.
+3. **Owner Profile:** Including **Maahi Narender** as the founder helps in "Knowledge Graph" results, linking your personal brand to the business.
+4. **Instagram Link:** The `sameAs` tag tells AI that the website and the Instagram profile belong to the same entity, increasing your "Trust Score."

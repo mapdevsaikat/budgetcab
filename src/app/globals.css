@@ -50,14 +50,33 @@ body {
   }
 }
 
+.pb-safe-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+.safe-area-insets-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-insets {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
 /* Leaflet Map Custom Styles */
 .leaflet-container {
   font-family: inherit;
 }
 
-/* Hide Leaflet attribution (we have our own) */
-.leaflet-control-attribution {
-  display: none !important;
+.leaflet-control-attribution a {
+  color: #0078A8 !important;
+  text-decoration: none !important;
+}
+
+.leaflet-control-attribution a:hover {
+  text-decoration: underline !important;
 }
 
 /* Custom user location marker styles */

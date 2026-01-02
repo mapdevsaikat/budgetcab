@@ -208,7 +208,7 @@ export default function ProfilePage() {
           </button>
         ) : (
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/booking')}
             className="mb-4 flex items-center gap-2 text-white/90 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

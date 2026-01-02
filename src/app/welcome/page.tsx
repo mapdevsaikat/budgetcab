@@ -49,10 +49,7 @@ export default function WelcomePage() {
       >
         {/* Logo Section */}
         <button
-          onClick={() => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            router.push('/');
-          }}
+          onClick={() => router.push('/')}
           className="flex flex-col items-center space-y-4 sm:space-y-6 cursor-pointer hover:opacity-90 transition-opacity active:scale-95 transition-transform"
         >
           <div className="relative">
@@ -177,3 +174,4 @@ export default function WelcomePage() {
     </div>
   );
 }
+

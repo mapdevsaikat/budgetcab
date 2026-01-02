@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, MapPin, X } from 'lucide-react';
+import * as digipin from 'digipin';
 
 interface LocationSearchProps {
     placeholder: string;
@@ -21,20 +22,85 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
     const [showSuggestions, setShowSuggestions] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
+    const lastProcessedDigipinRef = useRef<string>('');
 
     // Update query when value prop changes (for locked pickup display)
     useEffect(() => {
         if (value && !isUserTyping) {
             setQuery(value);
+            // Reset processed DigiPin if value changes externally
+            if (lastProcessedDigipinRef.current && !value.toUpperCase().includes(lastProcessedDigipinRef.current)) {
+                lastProcessedDigipinRef.current = '';
+            }
         } else if (!value && !isUserTyping) {
             // Reset to empty if value prop is cleared
             setQuery('');
+            lastProcessedDigipinRef.current = '';
         }
     }, [value, isUserTyping]);
 
+    // Handle DigiPin search (Bengaluru DigiPin starts with "4P")
+    const handleDigiPinSearch = useCallback((digipinQuery: string): boolean => {
+        const trimmedQuery = digipinQuery.trim().toUpperCase();
+        
+        // Prevent re-processing the same DigiPin
+        if (lastProcessedDigipinRef.current === trimmedQuery) {
+            return true; // Already processed, skip
+        }
+        
+        // Check if it's a Bengaluru DigiPin (starts with 4P) and matches DigiPin format
+        const isBengaluruDigiPin = trimmedQuery.startsWith('4P') && /^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(trimmedQuery);
+        
+        if (isBengaluruDigiPin) {
+            try {
+                // Use offline DigiPin library to get coordinates
+                const coordinates = digipin.getLatLonFromDIGIPIN(trimmedQuery);
+                
+                // Check if coordinates are valid (not "Invalid DIGIPIN" string)
+                if (coordinates && typeof coordinates === 'object' && 'latitude' in coordinates && 'longitude' in coordinates) {
+                    // Mark as processed before calling onSelect to prevent loops
+                    lastProcessedDigipinRef.current = trimmedQuery;
+                    
+                    // Create location object from DigiPin
+                    const location = {
+                        latitude: coordinates.latitude,
+                        longitude: coordinates.longitude,
+                        address: trimmedQuery,
+                        digipin: trimmedQuery,
+                        locality: undefined,
+                        pincode: undefined,
+                        district: undefined,
+                        state: undefined,
+                    };
+                    
+                    // Update UI state first (before calling onSelect to prevent loops)
+                    setResults([]);
+                    setShowSuggestions(false);
+                    setIsUserTyping(false);
+                    // Don't update query - it's already set to what user typed
+                    // Updating it would trigger useEffect again
+                    
+                    // Call onSelect with the location (this might trigger parent re-render)
+                    // But we've already marked it as processed, so it won't loop
+                    onSelect(location);
+                    
+                    console.log('DigiPin search successful:', trimmedQuery, coordinates);
+                    return true;
+                } else {
+                    console.warn('Invalid DigiPin:', trimmedQuery);
+                }
+            } catch (error) {
+                console.error('Error converting DigiPin to coordinates:', error);
+                // Fall through to regular search if DigiPin conversion fails
+            }
+        }
+        
+        return false;
+    }, [onSelect]);
+
     // Fetch autocomplete suggestions - matching SearchPanel.tsx reference pattern
-    const fetchAutocompleteSuggestions = async (searchQuery: string) => {
-        // Skip autocomplete for DigiPin format (e.g., "2P7-C93-PMP9")
+    const fetchAutocompleteSuggestions = useCallback(async (searchQuery: string) => {
+        // Skip autocomplete for DigiPin format (e.g., "2P7-C93-PMP9" or "4P3-JF2-JP44")
         const isDigiPin = /^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(searchQuery.trim());
         if (isDigiPin) {
             setResults([]);
@@ -72,11 +138,37 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     // Debounced autocomplete - matching SearchPanel.tsx reference pattern exactly
     useEffect(() => {
-        if (!query || query.trim().length < 3) {
+        if (!query || query.trim().length < 2) {
+            setResults([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        const trimmedQuery = query.trim().toUpperCase();
+        
+        // Check if user is typing a Bengaluru DigiPin (starts with 4P)
+        if (trimmedQuery.startsWith('4P')) {
+            // If it's a complete DigiPin format, try to convert it
+            if (/^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(trimmedQuery)) {
+                const handled = handleDigiPinSearch(trimmedQuery);
+                if (handled) {
+                    return; // DigiPin was successfully handled, don't call API
+                }
+            }
+            // If it starts with 4P but not complete format yet, don't call API
+            // User might still be typing - wait for complete DigiPin format
+            setResults([]);
+            setShowSuggestions(false);
+            setLoading(false);
+            return;
+        }
+
+        // For regular searches, require at least 3 characters
+        if (query.trim().length < 3) {
             setResults([]);
             setShowSuggestions(false);
             return;
@@ -87,7 +179,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
         }, 900);
 
         return () => clearTimeout(timer);
-    }, [query]);
+    }, [query, handleDigiPinSearch, fetchAutocompleteSuggestions]);
 
     // Close suggestions when clicking outside - matching SearchPanel.tsx reference
     useEffect(() => {
@@ -110,6 +202,10 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
         const val = e.target.value;
         setQuery(val);
         setIsUserTyping(true);
+        // Reset processed DigiPin ref when user types something new
+        if (lastProcessedDigipinRef.current && !val.toUpperCase().includes(lastProcessedDigipinRef.current)) {
+            lastProcessedDigipinRef.current = '';
+        }
     };
 
     const handleClear = () => {
@@ -117,6 +213,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
         setResults([]);
         setShowSuggestions(false);
         setIsUserTyping(false);
+        lastProcessedDigipinRef.current = ''; // Reset processed DigiPin
         if (onClear) {
             onClear();
         }
@@ -213,23 +310,42 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
                         </div>
                     )}
                     
-                    {!loading && results.map((result, i) => (
-                        <div
-                            key={i}
-                            className="px-3 py-2.5 hover:bg-maahi-brand/5 cursor-pointer flex items-center border-b border-gray-50 last:border-0 transition-colors"
-                            onClick={() => handleSelect(result)}
-                        >
-                            <MapPin className="text-maahi-accent mr-2 w-4 h-4 flex-shrink-0" />
-                            <div className="overflow-hidden flex-1">
-                                <p className="font-semibold text-sm text-gray-800 truncate">
-                                    {result.displayName || result.description || result.formatted_address || result.address || 'Unknown Location'}
+                    {!loading && (
+                        <>
+                            {results.map((result, i) => (
+                                <div
+                                    key={i}
+                                    className="px-3 py-2.5 hover:bg-maahi-brand/5 cursor-pointer flex items-center border-b border-gray-50 transition-colors"
+                                    onClick={() => handleSelect(result)}
+                                >
+                                    <MapPin className="text-maahi-accent mr-2 w-4 h-4 flex-shrink-0" />
+                                    <div className="overflow-hidden flex-1">
+                                        <p className="font-semibold text-sm text-gray-800 truncate">
+                                            {result.displayName || result.description || result.formatted_address || result.address || 'Unknown Location'}
+                                        </p>
+                                        {result.secondary_text && (
+                                            <p className="text-xs text-gray-500 truncate mt-0.5">{result.secondary_text}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                            {/* QuantaRoute Branding */}
+                            <div className="px-3 py-2 border-t border-gray-100 bg-gray-50/50">
+                                <p className="text-center text-xs text-gray-400">
+                                    Powered by{' '}
+                                    <a
+                                        href="https://quantaroute.com/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        QuantaRoute
+                                    </a>
                                 </p>
-                                {result.secondary_text && (
-                                    <p className="text-xs text-gray-500 truncate mt-0.5">{result.secondary_text}</p>
-                                )}
                             </div>
-                        </div>
-                    ))}
+                        </>
+                    )}
                 </div>
             )}
         </div>

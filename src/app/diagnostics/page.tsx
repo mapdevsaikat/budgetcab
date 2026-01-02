@@ -226,7 +226,7 @@ export default function DiagnosticsPage() {
                 {/* Navigation */}
                 <div className="mt-8 flex gap-4">
                     <a
-                        href="/"
+                        href="/booking"
                         className="flex-1 bg-maahi-brand text-white py-3 px-6 rounded-xl font-semibold text-center hover:opacity-90 transition-opacity"
                     >
                         Go to App

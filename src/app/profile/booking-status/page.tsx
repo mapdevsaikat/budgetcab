@@ -16,7 +16,7 @@ export default function BookingStatusPage() {
 
   useEffect(() => {
     if (!bookingRef) {
-      router.push('/');
+      router.push('/booking');
       return;
     }
 
@@ -67,7 +67,7 @@ export default function BookingStatusPage() {
       setBooking(data);
     } catch (error) {
       console.error('Error fetching booking:', error);
-      router.push('/');
+      router.push('/booking');
     } finally {
       setLoading(false);
     }
