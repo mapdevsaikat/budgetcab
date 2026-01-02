@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import dynamic from 'next/dynamic';
@@ -9,7 +9,7 @@ import { MapPin, Home, ArrowLeft, Navigation, Save, Plus, Edit, Trash2, Briefcas
 
 const Map = dynamic(() => import('@/components/Map'), { ssr: false });
 
-export default function AddressManagementPage() {
+function AddressManagementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
@@ -722,6 +722,18 @@ export default function AddressManagementPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AddressManagementPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-maahi-brand to-maahi-accent flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white"></div>
+      </div>
+    }>
+      <AddressManagementContent />
+    </Suspense>
   );
 }
 

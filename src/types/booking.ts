@@ -140,14 +140,14 @@ export const BookingStatusColors: Record<BookingStatusType, { bg: string; text: 
  * Check if a status is active (not terminal)
  */
 export const isActiveBooking = (status: BookingStatusType): boolean => {
-  return BookingStatusCategories.ACTIVE.includes(status as BookingStatus);
+  return BookingStatusCategories.ACTIVE.some(s => s === status);
 };
 
 /**
  * Check if a status is cancelled
  */
 export const isCancelledBooking = (status: BookingStatusType): boolean => {
-  return BookingStatusCategories.CANCELLED.includes(status as BookingStatus);
+  return BookingStatusCategories.CANCELLED.some(s => s === status);
 };
 
 /**

@@ -21,6 +21,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.maahicabs.com'),
   title: "MaahiCabs | Safe & Reliable Female-Only Cab Service in Bengaluru",
   description: "Book MaahiCabs for a safe, female-only taxi experience in Bengaluru. Founded by Maahi Narender, providing trusted rides with verified woman partners. Call or WhatsApp 9535238661.",
   keywords: ["female only cabs Bengaluru", "safe taxi for women Bangalore", "MaahiCabs", "women driven cabs", "ladies taxi service Bengaluru", "Maahi Narender"],
@@ -36,10 +37,10 @@ export const metadata: Metadata = {
     description: "By women, for women. Experience the safest cab service in Bengaluru. Book your ride today.",
     images: [
       {
-        url: "/android-chrome-512x512.png",
-        width: 512,
-        height: 512,
-        alt: "MaahiCabs Logo",
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "MaahiCabs - Safe & Reliable Female-Only Cab Service in Bengaluru",
       },
     ],
   },
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MaahiCabs | Female-Only Cabs Bengaluru",
     description: "Safe, professional, and reliable female-only cab service in Bengaluru. 24/7 availability.",
-    images: ["/android-chrome-512x512.png"],
+    images: ["/opengraph-image"],
   },
   icons: {
     icon: [

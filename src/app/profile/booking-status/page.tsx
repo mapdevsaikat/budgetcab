@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Clock, MapPin, User as UserIcon, Phone, ArrowLeft, CheckCircle } from 'lucide-react';
 
-export default function BookingStatusPage() {
+function BookingStatusContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const bookingRef = searchParams.get('ref');
@@ -250,6 +250,18 @@ export default function BookingStatusPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function BookingStatusPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-maahi-brand to-maahi-accent flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white"></div>
+      </div>
+    }>
+      <BookingStatusContent />
+    </Suspense>
   );
 }
 
