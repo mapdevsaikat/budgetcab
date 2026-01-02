@@ -47,7 +47,8 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
         // Only initialize once
         if (!mounted || map.current || !mapContainer.current) return;
 
-        const apiKey = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+        // Support both variable names for backward compatibility
+        const apiKey = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || process.env.NEXT_PUBLIC_MAPTILER_KEY;
 
         console.log('[MaahiCabs Map] Initializing Leaflet map...');
         console.log('[MaahiCabs Map] API Key present:', !!apiKey);
@@ -55,7 +56,14 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
 
         if (!apiKey) {
             console.error('[MaahiCabs Map] No API key found!');
-            setError('MapTiler API key not found. Please add NEXT_PUBLIC_MAPTILER_KEY to your .env file.');
+            setError('MapTiler API key not found. Please add NEXT_PUBLIC_MAPTILER_API_KEY to your .env.local file.');
+            return;
+        }
+
+        // Validate API key format (MapTiler keys are typically alphanumeric)
+        if (apiKey.length < 10) {
+            console.error('[MaahiCabs Map] Invalid API key format!');
+            setError('Invalid MapTiler API key format. Please check your NEXT_PUBLIC_MAPTILER_API_KEY in .env.local');
             return;
         }
 
@@ -71,10 +79,24 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
                 maxZoom: 20, // Set reasonable max zoom
             });
 
-            // Add MapTiler layer using the MaptilerLayer class
-            const mtLayer = new MaptilerLayer({
-                apiKey: apiKey,
-            }).addTo(map.current);
+            // Add error handler for tile loading errors
+            map.current.on('tileerror', (error: any) => {
+                console.error('[MaahiCabs Map] Tile loading error:', error);
+                setError('Failed to load map tiles. Please check your MapTiler API key and internet connection.');
+            });
+
+            // Add MapTiler layer using the MaptilerLayer class with error handling
+            try {
+                const mtLayer = new MaptilerLayer({
+                    apiKey: apiKey,
+                }).addTo(map.current);
+                
+                console.log('[MaahiCabs Map] MapTiler layer added successfully');
+            } catch (layerError) {
+                console.error('[MaahiCabs Map] Error creating MapTiler layer:', layerError);
+                setError(`Failed to initialize MapTiler layer: ${layerError instanceof Error ? layerError.message : 'Unknown error'}. Please check your API key in .env.local (NEXT_PUBLIC_MAPTILER_API_KEY).`);
+                return;
+            }
             // Setup event listeners
             map.current.on('load', () => {
                 console.log('[MaahiCabs Map] Map loaded successfully!');

@@ -1195,7 +1195,7 @@ export default function Home() {
 
       {/* Confirm Location Button */}
       {!isBookingSheetOpen && !pickupLocked && (
-        <div className="absolute bottom-0 left-0 right-0 px-3 sm:px-4 pb-safe-bottom z-[1001] safe-area-insets-bottom" style={{ paddingBottom: 'max(32px, calc(32px + env(safe-area-inset-bottom, 0px)))' }}>
+        <div className="absolute bottom-0 left-0 right-0 px-3 sm:px-4 pb-safe-bottom z-[1001] safe-area-insets-bottom" style={{ paddingBottom: 'max(64px, calc(64px + env(safe-area-inset-bottom, 0px)))' }}>
           <button
             onClick={handleConfirmPickupLocation}
             disabled={loadingAddress || !mapCenter}

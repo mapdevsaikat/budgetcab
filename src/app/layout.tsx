@@ -32,6 +32,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
+    siteName: "MaahiCabs",
     url: "https://www.maahicabs.com/",
     title: "MaahiCabs - Empowering Women's Travel in Bengaluru",
     description: "By women, for women. Experience the safest cab service in Bengaluru. Book your ride today.",
