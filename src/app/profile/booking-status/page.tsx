@@ -93,43 +93,44 @@ function BookingStatusContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-maahi-brand to-maahi-accent text-white p-6 pb-8">
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50 safe-area-insets">
+      {/* Header - Fixed */}
+      <div className="bg-gradient-to-r from-maahi-brand to-maahi-accent text-white p-4 sm:p-5 md:p-6 pb-6 sm:pb-7 md:pb-8 flex-shrink-0">
         <button
           onClick={() => router.push('/profile')}
-          className="mb-4 flex items-center gap-2 text-white/90 hover:text-white transition-colors"
+          className="mb-3 sm:mb-4 flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm sm:text-base"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           <span className="font-semibold">Back to Profile</span>
         </button>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold mb-1">Booking Status</h1>
-            <p className="text-white/80 text-sm">Ref: {booking.booking_ref}</p>
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold mb-1 truncate">Booking Status</h1>
+            <p className="text-white/80 text-xs sm:text-sm truncate">Ref: {booking.booking_ref}</p>
           </div>
-          <div className={`px-4 py-2 rounded-full border-2 ${statusColors[booking.status as keyof typeof statusColors] || statusColors.pending}`}>
-            <span className="font-bold uppercase text-sm">{booking.status}</span>
+          <div className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border-2 flex-shrink-0 ${statusColors[booking.status as keyof typeof statusColors] || statusColors.pending}`}>
+            <span className="font-bold uppercase text-[10px] sm:text-xs md:text-sm whitespace-nowrap">{booking.status}</span>
           </div>
         </div>
       </div>
 
-      <div className="px-4 -mt-4">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto scrollable-container px-3 sm:px-4 md:px-6 -mt-4 sm:-mt-5 md:-mt-6 pt-4 sm:pt-5 md:pt-6 pb-4 sm:pb-5 md:pb-6">
         {/* Countdown Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-4 border-2 border-maahi-accent/20">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-maahi-accent/10 p-3 rounded-full">
-              <Clock className="w-6 h-6 text-maahi-accent" />
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-3 sm:mb-4 border-2 border-maahi-accent/20">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="bg-maahi-accent/10 p-2 sm:p-3 rounded-full flex-shrink-0">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-maahi-accent" />
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Time Until Pickup</p>
-              <p className="text-3xl font-bold text-maahi-brand">{timeRemaining}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-gray-500">Time Until Pickup</p>
+              <p className="text-2xl sm:text-3xl font-bold text-maahi-brand break-words">{timeRemaining}</p>
             </div>
           </div>
 
-          <div className="border-t pt-4">
-            <p className="text-sm text-gray-600">
+          <div className="border-t pt-3 sm:pt-4">
+            <p className="text-xs sm:text-sm text-gray-600 break-words">
               Scheduled Time:{' '}
               <span className="font-semibold text-gray-800">
                 {new Date(booking.scheduled_time).toLocaleString('en-IN', {
@@ -142,79 +143,79 @@ function BookingStatusContent() {
         </div>
 
         {/* Trip Details */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-4">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-maahi-accent" />
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 mb-3 sm:mb-4">
+          <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-maahi-accent flex-shrink-0" />
             Trip Details
           </h2>
 
           {/* Pickup */}
-          <div className="mb-4">
-            <div className="flex items-start gap-3">
-              <div className="flex flex-col items-center">
-                <div className="w-4 h-4 rounded-full bg-maahi-brand"></div>
-                <div className="w-0.5 h-12 bg-gray-300"></div>
+          <div className="mb-3 sm:mb-4">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <div className="flex flex-col items-center flex-shrink-0">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-maahi-brand"></div>
+                <div className="w-0.5 h-10 sm:h-12 bg-gray-300"></div>
               </div>
-              <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1">PICKUP</p>
-                <p className="text-sm font-semibold text-gray-800">{booking.pickup_address}</p>
-                <p className="text-xs text-gray-400 mt-1">DigiPin: {booking.pickup_digipin}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] sm:text-xs text-gray-500 mb-1">PICKUP</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-800 break-words">{booking.pickup_address}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 mt-1 break-all">DigiPin: {booking.pickup_digipin}</p>
               </div>
             </div>
           </div>
 
           {/* Drop */}
           <div>
-            <div className="flex items-start gap-3">
-              <div className="flex flex-col items-center">
-                <div className="w-4 h-4 rounded-full bg-maahi-accent"></div>
+            <div className="flex items-start gap-2 sm:gap-3">
+              <div className="flex flex-col items-center flex-shrink-0">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-maahi-accent"></div>
               </div>
-              <div className="flex-1">
-                <p className="text-xs text-gray-500 mb-1">DROP-OFF</p>
-                <p className="text-sm font-semibold text-gray-800">{booking.drop_address}</p>
-                <p className="text-xs text-gray-400 mt-1">DigiPin: {booking.drop_digipin}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] sm:text-xs text-gray-500 mb-1">DROP-OFF</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-800 break-words">{booking.drop_address}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 mt-1 break-all">DigiPin: {booking.drop_digipin}</p>
               </div>
             </div>
           </div>
 
           {/* Distance & Price */}
-          <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t">
             <div>
-              <p className="text-xs text-gray-500 mb-1">Distance</p>
-              <p className="text-xl font-bold text-gray-800">{booking.distance_km} km</p>
+              <p className="text-[10px] sm:text-xs text-gray-500 mb-1">Distance</p>
+              <p className="text-lg sm:text-xl font-bold text-gray-800">{booking.distance_km} km</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">Total Fare</p>
-              <p className="text-xl font-bold text-green-600">₹{booking.price_total.toFixed(2)}</p>
+              <p className="text-[10px] sm:text-xs text-gray-500 mb-1">Total Fare</p>
+              <p className="text-lg sm:text-xl font-bold text-green-600">₹{booking.price_total.toFixed(2)}</p>
             </div>
           </div>
         </div>
 
         {/* Contact Info */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <UserIcon className="w-5 h-5 text-maahi-accent" />
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 mb-4 sm:mb-5 md:mb-6">
+          <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+            <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-maahi-accent flex-shrink-0" />
             Your Information
           </h2>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="bg-gray-100 p-2 rounded-lg">
-                <UserIcon className="w-4 h-4 text-gray-600" />
+          <div className="space-y-2 sm:space-y-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="bg-gray-100 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
+                <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
               </div>
-              <div>
-                <p className="text-xs text-gray-500">Name</p>
-                <p className="text-sm font-semibold text-gray-800">{booking.user_first_name}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] sm:text-xs text-gray-500">Name</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{booking.user_first_name}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="bg-gray-100 p-2 rounded-lg">
-                <Phone className="w-4 h-4 text-gray-600" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="bg-gray-100 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
+                <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
               </div>
-              <div>
-                <p className="text-xs text-gray-500">Mobile</p>
-                <p className="text-sm font-semibold text-gray-800">{booking.user_mobile}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] sm:text-xs text-gray-500">Mobile</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{booking.user_mobile}</p>
               </div>
             </div>
           </div>
@@ -222,12 +223,12 @@ function BookingStatusContent() {
 
         {/* Status Message */}
         {booking.status === 'pending' && (
-          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 mb-6">
-            <div className="flex gap-3">
-              <Clock className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-yellow-800 mb-1">Booking Confirmed</p>
-                <p className="text-sm text-yellow-700">
+          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-5 md:mb-6">
+            <div className="flex gap-2 sm:gap-3">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm sm:text-base font-semibold text-yellow-800 mb-1">Booking Confirmed</p>
+                <p className="text-xs sm:text-sm text-yellow-700 break-words">
                   Your booking is confirmed. Our driver will reach you shortly.
                 </p>
               </div>
@@ -236,12 +237,12 @@ function BookingStatusContent() {
         )}
 
         {booking.status === 'confirmed' && (
-          <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 mb-6">
-            <div className="flex gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-green-800 mb-1">Driver Assigned</p>
-                <p className="text-sm text-green-700">
+          <div className="bg-green-50 border-2 border-green-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-5 md:mb-6">
+            <div className="flex gap-2 sm:gap-3">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm sm:text-base font-semibold text-green-800 mb-1">Driver Assigned</p>
+                <p className="text-xs sm:text-sm text-green-700 break-words">
                   Your driver has been assigned and will contact you soon.
                 </p>
               </div>
@@ -249,6 +250,7 @@ function BookingStatusContent() {
           </div>
         )}
       </div>
+      {/* End Scrollable Content */}
     </div>
   );
 }
