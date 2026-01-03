@@ -818,40 +818,22 @@ function AddressManagementContent() {
                     </div>
                   </div>
                 )}
-
-                {/* Display Other Address Info */}
-                {(addressForm.district || addressForm.state) && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3">
-                    <p className="text-[10px] sm:text-xs text-blue-600 font-semibold mb-1">Auto-populated Address Info</p>
-                    <div className="space-y-1">
-                      {addressForm.district && (
-                        <p className="text-xs sm:text-sm text-gray-700 break-words">
-                          <span className="font-semibold">District:</span> {addressForm.district}
-                        </p>
-                      )}
-                      {addressForm.state && (
-                        <p className="text-xs sm:text-sm text-gray-700 break-words">
-                          <span className="font-semibold">State:</span> {addressForm.state}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
+                
+                {/* Save Button - Fixed spacing and theme colors */}
                 <button
                   onClick={handleSaveAddress}
                   disabled={saving}
-                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed text-sm sm:text-base"
+                  className="w-full bg-gradient-to-r from-maahi-brand to-maahi-accent text-white py-4 sm:py-5 rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-maahi-brand/30 transition-all disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] text-base sm:text-lg min-h-[56px] sm:min-h-[64px] mt-4 sm:mt-6"
                 >
                   {saving ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
-                      Saving...
+                      <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-white"></div>
+                      <span>Saving...</span>
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 sm:w-5 sm:h-5" />
-                      {editingAddressId ? 'Update Address' : 'Save Address'}
+                      <Save className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <span>{editingAddressId ? 'Update Address' : 'Save Address'}</span>
                     </>
                   )}
                 </button>
