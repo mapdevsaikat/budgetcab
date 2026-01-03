@@ -23,19 +23,31 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
     const lastProcessedDigipinRef = useRef<string>('');
+    const lastValueRef = useRef<string>(value || '');
 
     // Update query when value prop changes (for locked pickup display)
+    // Only update if value actually changed and user is not actively typing
     useEffect(() => {
-        if (value && !isUserTyping) {
-            setQuery(value);
-            // Reset processed DigiPin if value changes externally
-            if (lastProcessedDigipinRef.current && !value.toUpperCase().includes(lastProcessedDigipinRef.current)) {
+        // Skip if value hasn't actually changed
+        if (lastValueRef.current === (value || '')) {
+            return;
+        }
+
+        // Only sync if user is not actively typing
+        if (!isUserTyping) {
+            if (value) {
+                setQuery(value);
+                // Reset processed DigiPin if value changes externally and doesn't match
+                if (lastProcessedDigipinRef.current && !value.toUpperCase().includes(lastProcessedDigipinRef.current)) {
+                    lastProcessedDigipinRef.current = '';
+                }
+            } else {
+                // Only clear if value is explicitly cleared (not just empty)
+                // Don't clear if user is typing
+                setQuery('');
                 lastProcessedDigipinRef.current = '';
             }
-        } else if (!value && !isUserTyping) {
-            // Reset to empty if value prop is cleared
-            setQuery('');
-            lastProcessedDigipinRef.current = '';
+            lastValueRef.current = value || '';
         }
     }, [value, isUserTyping]);
 
@@ -77,6 +89,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
                     setResults([]);
                     setShowSuggestions(false);
                     setIsUserTyping(false);
+                    lastValueRef.current = trimmedQuery; // Update ref to prevent useEffect conflicts
                     // Don't update query - it's already set to what user typed
                     // Updating it would trigger useEffect again
                     
@@ -202,6 +215,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
         const val = e.target.value;
         setQuery(val);
         setIsUserTyping(true);
+        lastValueRef.current = val; // Update ref to prevent useEffect from overwriting
         // Reset processed DigiPin ref when user types something new
         if (lastProcessedDigipinRef.current && !val.toUpperCase().includes(lastProcessedDigipinRef.current)) {
             lastProcessedDigipinRef.current = '';
@@ -213,6 +227,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
         setResults([]);
         setShowSuggestions(false);
         setIsUserTyping(false);
+        lastValueRef.current = ''; // Reset value ref
         lastProcessedDigipinRef.current = ''; // Reset processed DigiPin
         if (onClear) {
             onClear();
@@ -229,6 +244,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
         setResults([]);
         setShowSuggestions(false);
         setIsUserTyping(false);
+        lastValueRef.current = displayName; // Update ref to prevent useEffect conflicts
 
         // Use data directly from autocomplete response
         onSelect({

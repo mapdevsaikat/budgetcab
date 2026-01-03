@@ -16,6 +16,16 @@ import { User } from '@supabase/supabase-js';
 import L from 'leaflet';
 import { generateBookingRef, calculateFare, getTimeSlotType, TimeSlotType } from '@/lib/booking';
 
+// Feature flag: Show pricing to users (set to false to hide pricing)
+const SHOW_PRICING_TO_USERS = false;
+
+// Helper function to get tomorrow's date in YYYY-MM-DD format
+const getTomorrowDateString = (): string => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().split('T')[0];
+};
+
 export default function Home() {
   const router = useRouter();
   const { pickup, drop, setPickup, setDrop, pickupLocked, lockPickup, unlockPickup, reset } = useBookingStore();
@@ -464,35 +474,24 @@ export default function Home() {
     }
   };
 
-  // Initialize date to today when booking sheet opens
+  // Initialize date to tomorrow when booking sheet opens (bookings must be made a day before)
   useEffect(() => {
     if (isBookingSheetOpen && !selectedDate) {
-      const today = new Date();
-      setSelectedDate(today.toISOString().split('T')[0]);
-      // Set default time to current hour + 1, or 9 AM if current hour is late
-      const currentHour = today.getHours();
-      const defaultHour = currentHour >= 20 ? 9 : currentHour + 1;
-      setSelectedTime(String(defaultHour).padStart(2, '0') + ':00');
-      setSelectedAmPm(defaultHour >= 12 ? 'PM' : 'AM');
+      const tomorrow = getTomorrowDateString();
+      setSelectedDate(tomorrow);
+      // Set default time to 9 AM for tomorrow's booking
+      setSelectedTime('09:00');
+      setSelectedAmPm('AM');
     }
   }, [isBookingSheetOpen, selectedDate]);
 
-  // Get minimum time for today (current time + 15 minutes buffer)
+  // Get minimum time (bookings must be made a day before, so any time is allowed)
   const getMinTime = () => {
-    const today = new Date();
-    const selectedDateObj = selectedDate ? new Date(selectedDate) : null;
-    
-    if (selectedDateObj && selectedDateObj.toDateString() === today.toDateString()) {
-      // If today is selected, minimum time is current time + 15 minutes
-      const minTime = new Date(today.getTime() + 15 * 60 * 1000); // Add 15 minutes
-      const hours = String(minTime.getHours()).padStart(2, '0');
-      const minutes = String(minTime.getMinutes()).padStart(2, '0');
-      return `${hours}:${minutes}`;
-    }
-    return '00:00'; // For future dates, any time is allowed
+    // Since bookings must be at least one day in advance, any time is allowed
+    return '00:00';
   };
 
-  // Validate if selected datetime is in the future
+  // Validate if selected datetime is at least one day in the future
   const isValidDateTime = () => {
     if (!selectedDate || !selectedTime) return false;
     
@@ -500,9 +499,12 @@ export default function Home() {
     // (because AM/PM buttons adjust the time value)
     const dateTimeString = `${selectedDate}T${selectedTime}:00`;
     const selectedDateTime = new Date(dateTimeString);
-    const now = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0); // Start of tomorrow
     
-    return selectedDateTime > now;
+    // Booking must be at least one day in advance
+    return selectedDateTime >= tomorrow;
   };
 
   // Check and update date to tomorrow if selected datetime is in the past
@@ -936,7 +938,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <LocationSearch
-                  placeholder={pickupLocked ? (pickup?.address || "Pickup Locked") : (tempPickupDigipin || "Search Pickup Location")}
+                  placeholder={pickupLocked ? (pickup?.address || "Pickup Locked") : (tempPickupDigipin || "Search Location or DigiPin")}
                   onSelect={(loc) => {
                     if (!pickupLocked) {
                       console.log('Selected pickup location from autocomplete:', loc);
@@ -1037,7 +1039,7 @@ export default function Home() {
             {/* Destination - Always visible, but disabled until pickup locked */}
             <div className="relative flex-shrink-0">
               <LocationSearch
-                placeholder={pickupLocked && !isAdjustingDestination ? "Search Drop-off Location" : "Drop-off Location"}
+                placeholder={pickupLocked && !isAdjustingDestination ? "Search Destination or Digipin" : "Search Destination or Digipin"}
                 disabled={!pickupLocked || isAdjustingDestination}
                 highlight={highlightDropoff && pickupLocked && !drop}
                 onSelect={(loc) => {
@@ -1305,7 +1307,7 @@ export default function Home() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
+                min={getTomorrowDateString()}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-maahi-accent focus:outline-none transition-colors text-gray-800 font-medium"
               />
             </div>
@@ -1387,29 +1389,37 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-4 mb-0">
             <div className="bg-gradient-to-br from-green-50 to-teal-50 p-4 rounded-2xl border border-green-100">
               <p className="text-xs text-gray-500 uppercase font-semibold">Estimated Fare</p>
-              <p className="text-2xl font-bold text-green-600">
-                {loadingRoute ? (
-                  <span className="text-lg">Calculating...</span>
-                ) : calculatedFare !== null ? (
-                  `₹${calculatedFare.toFixed(2)}`
-                ) : (
-                  '₹--'
-                )}
-              </p>
-              {distance && calculatedFare !== null && (() => {
-                const currentPricing = getCurrentPricing();
-                const timeSlotLabel = getTimeSlotLabel();
-                return (
-                  <>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Base: ₹{currentPricing.base_fare} + ₹{currentPricing.per_km_rate}/km
-                    </p>
-                    <p className="text-xs text-maahi-brand font-semibold mt-1">
-                      {timeSlotLabel}
-                    </p>
-                  </>
-                );
-              })()}
+              {SHOW_PRICING_TO_USERS ? (
+                <>
+                  <p className="text-2xl font-bold text-green-600">
+                    {loadingRoute ? (
+                      <span className="text-lg">Calculating...</span>
+                    ) : calculatedFare !== null ? (
+                      `₹${calculatedFare.toFixed(2)}`
+                    ) : (
+                      '₹--'
+                    )}
+                  </p>
+                  {distance && calculatedFare !== null && (() => {
+                    const currentPricing = getCurrentPricing();
+                    const timeSlotLabel = getTimeSlotLabel();
+                    return (
+                      <>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Base: ₹{currentPricing.base_fare} + ₹{currentPricing.per_km_rate}/km
+                        </p>
+                        <p className="text-xs text-maahi-brand font-semibold mt-1">
+                          {timeSlotLabel}
+                        </p>
+                      </>
+                    );
+                  })()}
+                </>
+              ) : (
+                <p className="text-lg sm:text-xl font-semibold text-gray-600 mt-1">
+                  Price on confirmation
+                </p>
+              )}
             </div>
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-100">
               <p className="text-xs text-gray-500 uppercase font-semibold">Distance</p>
