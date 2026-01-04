@@ -179,15 +179,17 @@ function BookingStatusContent() {
           </div>
 
           {/* Distance & Price */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t">
+          <div className={`grid ${booking.status === 'completed' ? 'grid-cols-2' : 'grid-cols-1'} gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t`}>
             <div>
               <p className="text-[10px] sm:text-xs text-gray-500 mb-1">Distance</p>
               <p className="text-lg sm:text-xl font-bold text-gray-800">{booking.distance_km} km</p>
             </div>
-            <div>
-              <p className="text-[10px] sm:text-xs text-gray-500 mb-1">Total Fare</p>
-              <p className="text-lg sm:text-xl font-bold text-green-600">₹{booking.price_total.toFixed(2)}</p>
-            </div>
+            {booking.status === 'completed' && (
+              <div>
+                <p className="text-[10px] sm:text-xs text-gray-500 mb-1">Total Fare</p>
+                <p className="text-lg sm:text-xl font-bold text-green-600">₹{booking.price_total.toFixed(2)}</p>
+              </div>
+            )}
           </div>
         </div>
 
