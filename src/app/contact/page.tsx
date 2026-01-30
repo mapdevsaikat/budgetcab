@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Contact Us | Budget Cabs Service Nashik - 24/7 Customer Support',
-  description: 'Contact Budget Cabs Service for taxi bookings in Nashik, Mumbai, Pune. Call 98606 89292‬, email info@budgetcabsservices.com. Available 24/7 for your travel needs.',
+  description: 'Contact Budget Cabs Service for taxi bookings in Nashik, Mumbai, Pune. Call 9860689292, email info@budgetcabsservices.com. Available 24/7 for your travel needs.',
   keywords: [
     'Budget Cabs Service contact',
     'Nashik taxi contact number',
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'Contact Budget Cabs Service - 24/7 Customer Support',
-    description: 'Get in touch with Budget Cabs Service for taxi bookings. Call 98606 89292‬ or email info@budgetcabsservices.com. Available 24/7.',
+    description: 'Get in touch with Budget Cabs Service for taxi bookings. Call 9860689292 or email info@budgetcabsservices.com. Available 24/7.',
     type: 'website',
   },
 };
@@ -84,10 +84,10 @@ export default function ContactPage() {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">Call Us</h3>
             <a
-              href="tel:+9198606 89292‬"
+              href="tel:+919860689292"
               className="text-2xl font-bold text-budget-brand hover:text-budget-brand/80 transition-colors block mb-2"
             >
-              98606 89292‬
+              98606 89292
             </a>
             <p className="text-gray-600 text-sm">Tap to call directly</p>
           </div>
@@ -131,7 +131,7 @@ export default function ContactPage() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
           <a
-            href="https://wa.me/9198606 89292‬?text=Hi%20Budget%20Cabs%20Service,%20I%20want%20to%20book%20a%20ride"
+            href="https://wa.me/919860689292?text=Hi%20Budget%20Cabs%20Service,%20I%20want%20to%20book%20a%20ride"
             target="_blank"
             rel="noopener noreferrer"
             className="bg-green-500 hover:bg-green-600 text-white rounded-xl p-6 flex items-center gap-4 transition-colors shadow-lg hover:shadow-xl"
@@ -213,9 +213,9 @@ export default function ContactPage() {
             <div>
               <h3 className="text-lg font-bold mb-4">Contact Us</h3>
               <div className="space-y-2">
-                <a href="tel:+9198606 89292‬" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
+                <a href="tel:+919860689292" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
                   <Phone className="w-4 h-4" />
-                  <span>98606 89292‬</span>
+                  <span>98606 89292</span>
                 </a>
                 <a href="mailto:info@budgetcabsservices.com" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
                   <Mail className="w-4 h-4" />

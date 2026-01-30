@@ -142,7 +142,7 @@ export default function AboutPage() {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <a
-                href="tel:+9198606 89292‬"
+                href="tel:+919860689292"
                 className="px-8 py-4 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/20 transition-all text-lg flex items-center justify-center gap-2"
               >
                 <Phone className="w-5 h-5" />
@@ -254,7 +254,7 @@ export default function AboutPage() {
                 </p>
                 <p className="text-lg leading-relaxed">
                   To make your traveling experience easier, you can book a cab with us on our website, or call us on 
-                  <a href="tel:+9198606 89292‬" className="text-budget-brand hover:underline font-semibold mx-1">98606 89292‬</a> if 
+                  <a href="tel:+919860689292" className="text-budget-brand hover:underline font-semibold mx-1">98606 89292</a> if 
                   you'd like to discuss your journey with our executives in detail. When you book an outstation cab with us, 
                   our expert drivers will guide you through some of the best experiences, ensuring you have a great road trip 
                   from the time you make a booking to the time you get back home.
@@ -384,11 +384,11 @@ export default function AboutPage() {
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <a
-                  href="tel:+9198606 89292‬"
+                  href="tel:+919860689292"
                   className="px-8 py-4 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/20 transition-all text-lg flex items-center justify-center gap-2"
                 >
                   <Phone className="w-5 h-5" />
-                  Call 98606 89292‬
+                  Call 98606 89292
                 </a>
               </div>
             </div>
@@ -403,9 +403,9 @@ export default function AboutPage() {
             <div>
               <h3 className="text-lg font-bold mb-4">Contact Us</h3>
               <div className="space-y-2">
-                <a href="tel:+9198606 89292‬" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
+                <a href="tel:+919860689292" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
                   <Phone className="w-4 h-4" />
-                  <span>98606 89292‬</span>
+                  <span>98606 89292</span>
                 </a>
                 <a href="mailto:info@budgetcabsservices.com" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
                   <Mail className="w-4 h-4" />

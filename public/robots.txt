@@ -6,5 +6,5 @@ Disallow: /api/
 Disallow: /diagnostics
 
 # Sitemap
-Sitemap: https://www.budgetcabsservice.com/sitemap.xml
+Sitemap: https://budgetcabsservices.com/sitemap.xml
 

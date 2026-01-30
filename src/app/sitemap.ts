@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://www.budgetcabsservice.com';
+  const baseUrl = 'https://budgetcabsservices.com';
   const now = new Date();
 
   // Main pages with their priorities and change frequencies
