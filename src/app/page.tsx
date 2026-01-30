@@ -41,7 +41,9 @@ export default function WelcomePage() {
       className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden"
       style={{ 
         minHeight: '100dvh',
-        paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0.5rem))',
+        width: '100%',
+        maxWidth: '100vw',
+        paddingTop: 'max(2rem, calc(env(safe-area-inset-top, 0px) + 2rem))',
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0.5rem))',
         paddingLeft: 'env(safe-area-inset-left, 0px)',
         paddingRight: 'env(safe-area-inset-right, 0px)'
@@ -58,7 +60,7 @@ export default function WelcomePage() {
 
       {/* Content Container - Scrollable with safe area */}
       <div 
-        className={`relative z-10 w-full max-w-4xl px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col items-center justify-center py-2 sm:py-4 transition-all duration-700 overflow-y-auto scrollable-container ${
+        className={`relative z-10 w-full max-w-4xl px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col items-center justify-center py-4 sm:py-6 md:py-8 transition-all duration-700 overflow-y-auto scrollable-container ${
           isAnimating ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'
         }`}
         style={{
@@ -66,7 +68,7 @@ export default function WelcomePage() {
         }}
       >
         {/* Logo Section - Compact */}
-        <div className="flex flex-col items-center space-y-2 sm:space-y-3 flex-shrink-0">
+        <div className="flex flex-col items-center space-y-2 sm:space-y-3 flex-shrink-0 mt-4 sm:mt-6 md:mt-8">
           <div className="relative">
             {/* Glow effect behind logo */}
             <div className="absolute inset-0 rounded-2xl blur-xl scale-80" style={{ backgroundColor: 'rgba(255, 193, 7, 0.6)' }}></div>
@@ -176,8 +178,23 @@ export default function WelcomePage() {
           </div>
         </div>
 
-        {/* Credits Footer - Compact */}
+        {/* Navigation Links */}
         <div className="w-full px-2 sm:px-4 pb-2 sm:pb-4 pt-2 sm:pt-4 flex-shrink-0">
+          <div className="flex items-center justify-center gap-4 sm:gap-6 mb-3 sm:mb-4">
+            <button
+              onClick={() => router.push('/about')}
+              className="text-white/80 hover:text-white text-xs sm:text-sm font-medium transition-colors underline"
+            >
+              About Us
+            </button>
+            <span className="text-white/40">•</span>
+            <button
+              onClick={() => router.push('/contact')}
+              className="text-white/80 hover:text-white text-xs sm:text-sm font-medium transition-colors underline"
+            >
+              Contact
+            </button>
+          </div>
           <div className="text-center space-y-1 sm:space-y-2">
             <p className="text-[10px] sm:text-xs md:text-sm text-white/70 font-medium">
               Built by{' '}

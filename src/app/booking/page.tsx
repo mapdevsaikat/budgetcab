@@ -1211,6 +1211,12 @@ export default function Home() {
             </button>
 
             <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <button
+                onClick={() => router.push('/about')}
+                className="hidden sm:flex items-center gap-1 bg-white/95 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-md border border-white/50 hover:bg-white transition-colors text-xs sm:text-sm font-medium text-gray-700"
+              >
+                About
+              </button>
               {user ? (
                 <div className="relative" ref={userMenuRef}>
                   <button
@@ -1226,6 +1232,15 @@ export default function Home() {
 
                   {showUserMenu && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl overflow-hidden z-50 border border-gray-100">
+                      <button
+                        onClick={() => {
+                          router.push('/about');
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 transition-colors text-sm border-b border-gray-100"
+                      >
+                        <span>About Us</span>
+                      </button>
                       <div className="p-4 border-b border-gray-100">
                         <p className="text-sm font-semibold text-gray-800">
                           {profile?.first_name} {profile?.last_name}

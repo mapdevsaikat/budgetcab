@@ -20,6 +20,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily',
       priority: 0.9,
     },
+    // About page - High priority for SEO
+    {
+      url: `${baseUrl}/about`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    // Contact page - High priority for SEO
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
     // User pages
     {
       url: `${baseUrl}/onboarding`,
