@@ -119,7 +119,7 @@ export default function RootLayout({
       "name": "Budget Cabs Service",
       "image": "https://www.budgetcabsservice.com/android-chrome-512x512.png",
       "telePhone": "+91-8600829292",
-      "email": "budgetcabsservice@gmail.com",
+      "email": "info@budgetcabsservices.com",
       "priceRange": "₹₹",
       "address": {
         "@type": "PostalAddress",

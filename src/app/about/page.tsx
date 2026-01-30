@@ -411,9 +411,9 @@ export default function AboutPage() {
                   <Phone className="w-4 h-4" />
                   <span>7977619481</span>
                 </a>
-                <a href="mailto:budgetcabsservice@gmail.com" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
+                <a href="mailto:info@budgetcabsservices.com" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
                   <Mail className="w-4 h-4" />
-                  <span>budgetcabsservice@gmail.com</span>
+                  <span>info@budgetcabsservices.com</span>
                 </a>
               </div>
             </div>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Contact Us | Budget Cabs Service Nashik - 24/7 Customer Support',
-  description: 'Contact Budget Cabs Service for taxi bookings in Nashik, Mumbai, Pune. Call 8600829292 or 7977619481, email budgetcabsservice@gmail.com. Available 24/7 for your travel needs.',
+  description: 'Contact Budget Cabs Service for taxi bookings in Nashik, Mumbai, Pune. Call 8600829292 or 7977619481, email info@budgetcabsservices.com. Available 24/7 for your travel needs.',
   keywords: [
     'Budget Cabs Service contact',
     'Nashik taxi contact number',
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'Contact Budget Cabs Service - 24/7 Customer Support',
-    description: 'Get in touch with Budget Cabs Service for taxi bookings. Call 8600829292 or email budgetcabsservice@gmail.com. Available 24/7.',
+    description: 'Get in touch with Budget Cabs Service for taxi bookings. Call 8600829292 or email info@budgetcabsservices.com. Available 24/7.',
     type: 'website',
   },
 };
@@ -114,10 +114,10 @@ export default function ContactPage() {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">Email Us</h3>
             <a
-              href="mailto:budgetcabsservice@gmail.com"
+              href="mailto:info@budgetcabsservices.com"
               className="text-lg font-semibold text-budget-warn hover:text-budget-warn/80 transition-colors block mb-2 break-all"
             >
-              budgetcabsservice@gmail.com
+              info@budgetcabsservices.com
             </a>
             <p className="text-gray-600 text-sm">Send us an email</p>
           </div>
@@ -236,9 +236,9 @@ export default function ContactPage() {
                   <Phone className="w-4 h-4" />
                   <span>7977619481</span>
                 </a>
-                <a href="mailto:budgetcabsservice@gmail.com" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
+                <a href="mailto:info@budgetcabsservices.com" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
                   <Mail className="w-4 h-4" />
-                  <span>budgetcabsservice@gmail.com</span>
+                  <span>info@budgetcabsservices.com</span>
                 </a>
               </div>
             </div>
