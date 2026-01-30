@@ -29,11 +29,11 @@ export default function WelcomePage() {
   };
 
   const handleWhatsApp = () => {
-    window.open('https://wa.me/918600829292?text=Hi%20Budget%20Cabs%20Service,%20I%20want%20to%20book%20a%20ride', '_blank');
+    window.open('https://wa.me/9198606 89292‬?text=Hi%20Budget%20Cabs%20Service,%20I%20want%20to%20book%20a%20ride', '_blank');
   };
 
   const handleCall = () => {
-    window.open('tel:+918600829292', '_blank');
+    window.open('tel:+9198606 89292‬', '_blank');
   };
 
   return (

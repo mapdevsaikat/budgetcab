@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.budgetcabsservice.com'),
   title: "Budget Cabs Service Nashik | Airport Transfer | Nashik-Mumbai-Pune Taxi",
-  description: "Book affordable taxi service from Nashik to Mumbai, Pune, and airport transfers. Budget Cabs Service offers reliable intercity cabs, Nashik-Mumbai taxi, Nashik-Pune cab, Malegaon taxi, and Mumbai Airport transfers. Call 8600829292 for bookings.",
+  description: "Book affordable taxi service from Nashik to Mumbai, Pune, and airport transfers. Budget Cabs Service offers reliable intercity cabs, Nashik-Mumbai taxi, Nashik-Pune cab, Malegaon taxi, and Mumbai Airport transfers. Call 98606 89292‬ for bookings.",
   keywords: [
     "Nashik taxi service",
     "Nashik to Mumbai taxi",
@@ -118,7 +118,7 @@ export default function RootLayout({
       "@type": "LocalBusiness",
       "name": "Budget Cabs Service",
       "image": "https://www.budgetcabsservice.com/android-chrome-512x512.png",
-      "telePhone": "+91-8600829292",
+      "telePhone": "+91-98606 89292‬",
       "email": "info@budgetcabsservices.com",
       "priceRange": "₹₹",
       "address": {
@@ -174,15 +174,7 @@ export default function RootLayout({
     "contactPoint": [
       {
         "@type": "ContactPoint",
-        "telephone": "+91-8600829292",
-        "contactType": "booking and customer service",
-        "availableLanguage": ["English", "Hindi", "Marathi"],
-        "areaServed": ["IN"],
-        "availableChannel": ["Phone", "WhatsApp"]
-      },
-      {
-        "@type": "ContactPoint",
-        "telephone": "+91-7977619481",
+        "telephone": "+91-98606 89292‬",
         "contactType": "booking and customer service",
         "availableLanguage": ["English", "Hindi", "Marathi"],
         "areaServed": ["IN"],
