@@ -51,7 +51,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
         }
     }, [value, isUserTyping]);
 
-    // Handle DigiPin search (Bengaluru DigiPin starts with "4P")
+    // Handle DigiPin search (Mumbai-Nashik area DigiPin support)
     const handleDigiPinSearch = useCallback((digipinQuery: string): boolean => {
         const trimmedQuery = digipinQuery.trim().toUpperCase();
         
@@ -60,10 +60,10 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
             return true; // Already processed, skip
         }
         
-        // Check if it's a Bengaluru DigiPin (starts with 4P) and matches DigiPin format
-        const isBengaluruDigiPin = trimmedQuery.startsWith('4P') && /^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(trimmedQuery);
+        // Check if it matches DigiPin format (e.g., "4P3-JF2-JP44" or other regional formats)
+        const isValidDigiPin = /^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(trimmedQuery);
         
-        if (isBengaluruDigiPin) {
+        if (isValidDigiPin) {
             try {
                 // Use offline DigiPin library to get coordinates
                 const coordinates = digipin.getLatLonFromDIGIPIN(trimmedQuery);
@@ -163,8 +163,8 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
 
         const trimmedQuery = query.trim().toUpperCase();
         
-        // Check if user is typing a Bengaluru DigiPin (starts with 4P)
-        if (trimmedQuery.startsWith('4P')) {
+        // Check if user is typing a DigiPin (various regional formats supported)
+        if (/^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(trimmedQuery)) {
             // If it's a complete DigiPin format, try to convert it
             if (/^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(trimmedQuery)) {
                 const handled = handleDigiPinSearch(trimmedQuery);
@@ -265,14 +265,14 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
                 disabled ? 'opacity-60 cursor-not-allowed' : ''
             } ${
                 highlight 
-                    ? 'border-maahi-brand border-2 shadow-[0_0_20px_rgba(0,169,157,0.4)] ring-2 ring-maahi-brand/30 animate-[pulse_2s_ease-in-out_infinite]' 
+                    ? 'border-budget-brand border-2 shadow-[0_0_20px_rgba(0,169,157,0.4)] ring-2 ring-budget-brand/30 animate-[pulse_2s_ease-in-out_infinite]' 
                     : 'border-gray-100'
             }`}>
                 {value && value.includes('-') ? (
                     // DigiPin format detected
-                    <span className="text-maahi-accent mr-2 text-sm flex-shrink-0">📍</span>
+                    <span className="text-budget-accent mr-2 text-sm flex-shrink-0">📍</span>
                 ) : (
-                    <MapPin className="text-maahi-brand mr-2 w-4 h-4 flex-shrink-0" />
+                    <MapPin className="text-budget-brand mr-2 w-4 h-4 flex-shrink-0" />
                 )}
                 <input
                     ref={inputRef}
@@ -307,7 +307,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
                     </button>
                 )}
                 {loading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-maahi-brand flex-shrink-0"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-budget-brand flex-shrink-0"></div>
                 ) : (
                     <Search className="text-gray-400 w-4 h-4 flex-shrink-0" />
                 )}
@@ -321,7 +321,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
                 >
                     {loading && (
                         <div className="px-3 py-2.5 text-center text-gray-500 text-xs">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-maahi-brand mx-auto mb-1"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-budget-brand mx-auto mb-1"></div>
                             <p>Searching...</p>
                         </div>
                     )}
@@ -331,10 +331,10 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
                             {results.map((result, i) => (
                                 <div
                                     key={i}
-                                    className="px-3 py-2.5 hover:bg-maahi-brand/5 cursor-pointer flex items-center border-b border-gray-50 transition-colors"
+                                    className="px-3 py-2.5 hover:bg-budget-brand/5 cursor-pointer flex items-center border-b border-gray-50 transition-colors"
                                     onClick={() => handleSelect(result)}
                                 >
-                                    <MapPin className="text-maahi-accent mr-2 w-4 h-4 flex-shrink-0" />
+                                    <MapPin className="text-budget-accent mr-2 w-4 h-4 flex-shrink-0" />
                                     <div className="overflow-hidden flex-1">
                                         <p className="font-semibold text-sm text-gray-800 truncate">
                                             {result.displayName || result.description || result.formatted_address || result.address || 'Unknown Location'}

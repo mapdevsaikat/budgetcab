@@ -1,5 +1,10 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.maahicabs.com/sitemap.xml
+# Disallow admin and private pages
+Disallow: /api/
+Disallow: /diagnostics
+
+# Sitemap
+Sitemap: https://www.budgetcabsservice.com/sitemap.xml
 

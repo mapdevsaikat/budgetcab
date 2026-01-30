@@ -1,38 +1,48 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://www.maahicabs.com';
+  const baseUrl = 'https://www.budgetcabsservice.com';
+  const now = new Date();
 
   // Main pages with their priorities and change frequencies
-  const routes = [
+  const routes: MetadataRoute.Sitemap = [
+    // Homepage - Highest priority
     {
       url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
+      lastModified: now,
+      changeFrequency: 'daily',
       priority: 1.0,
     },
+    // Booking page - High priority for SEO
+    {
+      url: `${baseUrl}/booking`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    // User pages
     {
       url: `${baseUrl}/onboarding`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
+      lastModified: now,
+      changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/profile`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
+      lastModified: now,
+      changeFrequency: 'weekly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/profile/address`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
+      lastModified: now,
+      changeFrequency: 'monthly',
       priority: 0.6,
     },
     {
       url: `${baseUrl}/profile/booking-status`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
+      lastModified: now,
+      changeFrequency: 'daily',
       priority: 0.7,
     },
   ];

@@ -136,7 +136,7 @@ export default function DiagnosticsPage() {
                 <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
                     <div className="text-center">
                         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                            MaahiCabs Diagnostics
+                            budgetcab Diagnostics
                         </h1>
                         <p className="text-gray-600">
                             Environment configuration status
@@ -227,7 +227,7 @@ export default function DiagnosticsPage() {
                 <div className="mt-8 flex gap-4">
                     <a
                         href="/booking"
-                        className="flex-1 bg-maahi-brand text-white py-3 px-6 rounded-xl font-semibold text-center hover:opacity-90 transition-opacity"
+                        className="flex-1 bg-budget-brand text-white py-3 px-6 rounded-xl font-semibold text-center hover:opacity-90 transition-opacity"
                     >
                         Go to App
                     </a>

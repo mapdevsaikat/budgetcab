@@ -52,7 +52,7 @@ const SuccessRedirect: React.FC<SuccessRedirectProps> = ({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-gradient-to-br from-maahi-brand/95 via-maahi-accent/95 to-teal-600/95 backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-budget-brand/95 via-budget-accent/95 to-teal-600/95 backdrop-blur-sm"></div>
 
       {/* Success Card */}
       <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-300 p-8 text-center">
@@ -74,7 +74,7 @@ const SuccessRedirect: React.FC<SuccessRedirectProps> = ({
 
         {/* Loading Indicator */}
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-6 h-6 text-maahi-brand animate-spin" />
+          <Loader2 className="w-6 h-6 text-budget-brand animate-spin" />
           <p className="text-sm text-gray-500">
             Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
           </p>

@@ -188,7 +188,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-maahi-brand to-maahi-accent flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-budget-brand to-budget-accent flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white"></div>
       </div>
     );
@@ -197,7 +197,7 @@ export default function ProfilePage() {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50 safe-area-insets">
       {/* Header - Fixed */}
-      <div className="bg-gradient-to-r from-maahi-brand to-maahi-accent text-white p-4 sm:p-5 md:p-6 flex-shrink-0">
+      <div className="bg-gradient-to-r from-budget-brand to-budget-accent text-white p-4 sm:p-5 md:p-6 flex-shrink-0">
         {activeBooking ? (
           <button
             onClick={() => router.push(`/profile/booking-status?ref=${activeBooking.booking_ref}`)}
@@ -263,8 +263,8 @@ export default function ProfilePage() {
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-              <div className="bg-maahi-brand/10 p-2 sm:p-3 rounded-full flex-shrink-0">
-                <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-maahi-brand" />
+              <div className="bg-budget-brand/10 p-2 sm:p-3 rounded-full flex-shrink-0">
+                <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-budget-brand" />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-base sm:text-lg font-bold text-gray-800 truncate">Saved Addresses</h3>
@@ -282,9 +282,9 @@ export default function ProfilePage() {
 
         {/* Quick Add Address if no addresses */}
         {addressCount === 0 && (
-          <div className="bg-gradient-to-br from-maahi-brand/5 to-maahi-accent/5 border-2 border-maahi-brand/20 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6">
+          <div className="bg-gradient-to-br from-budget-brand/5 to-budget-accent/5 border-2 border-budget-brand/20 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6">
             <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-              <Home className="w-5 h-5 sm:w-6 sm:h-6 text-maahi-brand flex-shrink-0" />
+              <Home className="w-5 h-5 sm:w-6 sm:h-6 text-budget-brand flex-shrink-0" />
               <h3 className="text-base sm:text-lg font-bold text-gray-800">Add Your Home Address</h3>
             </div>
             <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
@@ -292,7 +292,7 @@ export default function ProfilePage() {
             </p>
             <button
               onClick={() => router.push('/profile/address?mode=add')}
-              className="w-full bg-maahi-brand text-white py-2.5 sm:py-3 rounded-xl font-semibold hover:bg-maahi-brand/90 transition-all text-sm sm:text-base"
+              className="w-full bg-budget-brand text-white py-2.5 sm:py-3 rounded-xl font-semibold hover:bg-budget-brand/90 transition-all text-sm sm:text-base"
             >
               Add Home Address
             </button>
@@ -303,7 +303,7 @@ export default function ProfilePage() {
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 md:p-6">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-maahi-accent flex-shrink-0" />
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-budget-accent flex-shrink-0" />
               <h2 className="text-base sm:text-lg font-bold text-gray-800">Booking History</h2>
             </div>
           </div>
@@ -321,7 +321,7 @@ export default function ProfilePage() {
                 }}
                 className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                   selectedMonth === ''
-                    ? 'bg-maahi-brand text-white shadow-md'
+                    ? 'bg-budget-brand text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -333,7 +333,7 @@ export default function ProfilePage() {
                   onClick={() => handleMonthChange(month.value)}
                   className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
                     selectedMonth === month.value
-                      ? 'bg-maahi-brand text-white shadow-md'
+                      ? 'bg-budget-brand text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -346,7 +346,7 @@ export default function ProfilePage() {
           {/* Bookings List */}
           {loadingBookings ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-maahi-brand"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-budget-brand"></div>
             </div>
           ) : bookings.length === 0 ? (
             <div className="text-center py-8">
@@ -365,12 +365,12 @@ export default function ProfilePage() {
                   <button
                     key={booking.id}
                     onClick={() => router.push(`/profile/booking-status?ref=${booking.booking_ref}`)}
-                    className="w-full text-left border-2 border-gray-100 rounded-lg sm:rounded-xl p-3 sm:p-4 hover:border-maahi-accent/30 transition-all"
+                    className="w-full text-left border-2 border-gray-100 rounded-lg sm:rounded-xl p-3 sm:p-4 hover:border-budget-accent/30 transition-all"
                   >
                     <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                          <span className="text-[10px] sm:text-xs font-mono font-semibold text-maahi-brand truncate">
+                          <span className="text-[10px] sm:text-xs font-mono font-semibold text-budget-brand truncate">
                             {booking.booking_ref}
                           </span>
                           <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${statusColor.bg} ${statusColor.text} whitespace-nowrap`}>

@@ -11,9 +11,9 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   
-  --color-maahi-brand: #2E3192;
-  --color-maahi-accent: #00A99D;
-  --color-maahi-warn: #FFC107;
+  --color-budget-brand: #DC2626;
+  --color-budget-accent: #4B5563;
+  --color-budget-warn: #FFC107;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -132,4 +132,20 @@ body {
 
 .animate-bounce-slow {
   animation: bounce-slow 2s ease-in-out infinite;
+}
+
+/* PWA Install Prompt Animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
 }

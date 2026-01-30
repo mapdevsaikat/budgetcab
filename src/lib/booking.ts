@@ -1,6 +1,6 @@
 export function generateBookingRef(): string {
     const digits = Math.floor(Math.random() * 10000000000).toString().padStart(10, '0');
-    return `MA-${digits}`;
+    return `BC-${digits}`;
 }
 
 /**
@@ -41,13 +41,58 @@ export function getTimeSlotType(dateTime: Date): TimeSlotType {
 }
 
 /**
- * Calculate fare based on distance and time slot
+ * Calculate number of nights between start and end date
+ */
+export function calculateNights(startDate: string, endDate: string | null): number {
+  if (!endDate || !startDate) return 0;
+  
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Reset time to midnight for accurate day calculation
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  
+  const diffTime = end.getTime() - start.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return Math.max(0, diffDays);
+}
+
+/**
+ * Calculate fare based on distance, time slot, vehicle type multiplier, and duration
+ * @param distanceKm - Distance in kilometers
+ * @param baseFare - Base fare amount
+ * @param perKmRate - Rate per kilometer
+ * @param timeSlot - Time slot type (optional, for future use)
+ * @param vehicleMultiplier - Vehicle type multiplier from database (default: 1.0)
+ * @param startDate - Start date for trip
+ * @param endDate - End date for trip (optional)
+ * @param nightStayRate - Night stay rate per night (default: 500)
  */
 export function calculateFare(
     distanceKm: number, 
     baseFare: number, 
     perKmRate: number, 
-    timeSlot?: TimeSlotType
+    timeSlot?: TimeSlotType,
+    vehicleMultiplier: number = 1.0,
+    startDate?: string,
+    endDate?: string | null,
+    nightStayRate: number = 500 // Default night stay rate per night
 ): number {
-    return parseFloat(((distanceKm * perKmRate) + baseFare).toFixed(2));
+    // Base fare calculation
+    let fare = (distanceKm * perKmRate) + baseFare;
+    
+    // Apply vehicle type multiplier (from database)
+    fare = fare * vehicleMultiplier;
+    
+    // Add night stay charges if start_date and end_date are different
+    if (startDate && endDate) {
+        const nights = calculateNights(startDate, endDate);
+        if (nights > 0) {
+            fare += nights * nightStayRate;
+        }
+    }
+    
+    return parseFloat(fare.toFixed(2));
 }

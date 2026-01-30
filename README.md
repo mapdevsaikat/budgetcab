@@ -1,6 +1,6 @@
-# MaahiCabs User Application
+# Budget Cabs Service - User Application
 
-A mobile-first cab booking application built with Next.js, Supabase, and modern mapping technologies.
+A mobile-first intercity taxi booking application for Mumbai to Nashik routes, built with Next.js, Supabase, and modern mapping technologies.
 
 ## 🚀 Quick Start
 

@@ -75,7 +75,7 @@ function BookingStatusContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-maahi-brand to-maahi-accent flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-budget-brand to-budget-accent flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white"></div>
       </div>
     );
@@ -95,7 +95,7 @@ function BookingStatusContent() {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50 safe-area-insets">
       {/* Header - Fixed */}
-      <div className="bg-gradient-to-r from-maahi-brand to-maahi-accent text-white p-4 sm:p-5 md:p-6 pb-6 sm:pb-7 md:pb-8 flex-shrink-0">
+      <div className="bg-gradient-to-r from-budget-brand to-budget-accent text-white p-4 sm:p-5 md:p-6 pb-6 sm:pb-7 md:pb-8 flex-shrink-0">
         <button
           onClick={() => router.push('/profile')}
           className="mb-3 sm:mb-4 flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm sm:text-base"
@@ -118,14 +118,14 @@ function BookingStatusContent() {
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto scrollable-container px-3 sm:px-4 md:px-6 -mt-4 sm:-mt-5 md:-mt-6 pt-4 sm:pt-5 md:pt-6 pb-4 sm:pb-5 md:pb-6">
         {/* Countdown Card */}
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-3 sm:mb-4 border-2 border-maahi-accent/20">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-3 sm:mb-4 border-2 border-budget-accent/20">
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <div className="bg-maahi-accent/10 p-2 sm:p-3 rounded-full flex-shrink-0">
-              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-maahi-accent" />
+            <div className="bg-budget-accent/10 p-2 sm:p-3 rounded-full flex-shrink-0">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-budget-accent" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs sm:text-sm text-gray-500">Time Until Pickup</p>
-              <p className="text-2xl sm:text-3xl font-bold text-maahi-brand break-words">{timeRemaining}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-budget-brand break-words">{timeRemaining}</p>
             </div>
           </div>
 
@@ -145,7 +145,7 @@ function BookingStatusContent() {
         {/* Trip Details */}
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 mb-3 sm:mb-4">
           <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
-            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-maahi-accent flex-shrink-0" />
+            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-budget-accent flex-shrink-0" />
             Trip Details
           </h2>
 
@@ -153,7 +153,7 @@ function BookingStatusContent() {
           <div className="mb-3 sm:mb-4">
             <div className="flex items-start gap-2 sm:gap-3">
               <div className="flex flex-col items-center flex-shrink-0">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-maahi-brand"></div>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-budget-brand"></div>
                 <div className="w-0.5 h-10 sm:h-12 bg-gray-300"></div>
               </div>
               <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ function BookingStatusContent() {
           <div>
             <div className="flex items-start gap-2 sm:gap-3">
               <div className="flex flex-col items-center flex-shrink-0">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-maahi-accent"></div>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-budget-accent"></div>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] sm:text-xs text-gray-500 mb-1">DROP-OFF</p>
@@ -196,7 +196,7 @@ function BookingStatusContent() {
         {/* Contact Info */}
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 mb-4 sm:mb-5 md:mb-6">
           <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
-            <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-maahi-accent flex-shrink-0" />
+            <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 text-budget-accent flex-shrink-0" />
             Your Information
           </h2>
 
@@ -260,7 +260,7 @@ function BookingStatusContent() {
 export default function BookingStatusPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-maahi-brand to-maahi-accent flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-budget-brand to-budget-accent flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white"></div>
       </div>
     }>

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Environment Setup Checker for MaahiCabs
+ * Environment Setup Checker for budgetcab
  * Run this script to verify your .env.local configuration
  */
 
@@ -54,7 +54,7 @@ const requiredVars = [
 
 function printHeader() {
     console.log(`\n${colors.bold}${colors.cyan}╔═══════════════════════════════════════════╗`);
-    console.log(`║   MaahiCabs Environment Setup Checker    ║`);
+    console.log(`║   budgetcab Environment Setup Checker    ║`);
     console.log(`╚═══════════════════════════════════════════╝${colors.reset}\n`);
 }
 

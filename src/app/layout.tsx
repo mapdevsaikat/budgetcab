@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import EnvWarningBanner from "@/components/EnvWarningBanner";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,34 +22,64 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.maahicabs.com'),
-  title: "MaahiCabs | Safe & Reliable Female-Only Cab Service in Bengaluru",
-  description: "Book MaahiCabs for a safe, female-only taxi experience in Bengaluru. Founded by Maahi Narender, providing trusted rides with verified woman partners. Call or WhatsApp 9535238661.",
-  keywords: ["female only cabs Bengaluru", "safe taxi for women Bangalore", "MaahiCabs", "women driven cabs", "ladies taxi service Bengaluru", "Maahi Narender"],
-  authors: [{ name: "Maahi Narender" }],
+  metadataBase: new URL('https://www.budgetcabsservice.com'),
+  title: "Budget Cabs Service Nashik | Airport Transfer | Nashik-Mumbai-Pune Taxi",
+  description: "Book affordable taxi service from Nashik to Mumbai, Pune, and airport transfers. Budget Cabs Service offers reliable intercity cabs, Nashik-Mumbai taxi, Nashik-Pune cab, Malegaon taxi, and Mumbai Airport transfers. Call 8600829292 for bookings.",
+  keywords: [
+    "Nashik taxi service",
+    "Nashik to Mumbai taxi",
+    "Nashik to Pune cab",
+    "Mumbai to Nashik taxi",
+    "Pune to Nashik cab",
+    "Nashik airport transfer",
+    "Mumbai airport transfer",
+    "Nashik-Mumbai taxi",
+    "Nashik-Pune taxi",
+    "Malegaon taxi",
+    "Nashik cab service",
+    "intercity taxi Nashik",
+    "budget cab Nashik",
+    "affordable taxi Nashik",
+    "Nashik taxi booking",
+    "cab service Nashik",
+    "Nashik to Mumbai airport",
+    "Nashik to Pune airport",
+    "Panchavati taxi",
+    "Gangapur Road taxi",
+    "Satpur taxi",
+    "Ambad taxi",
+    "Sinnar taxi",
+    "Igatpuri taxi",
+    "Trimbakeshwar taxi",
+    "Shirdi taxi",
+    "sharing cab Nashik",
+    "Nashik local taxi",
+    "outstation taxi Nashik"
+  ],
+  authors: [{ name: "Budget Cabs Service" }],
   robots: {
     index: true,
     follow: true,
   },
   openGraph: {
     type: "website",
-    siteName: "MaahiCabs",
-    url: "https://www.maahicabs.com/",
-    title: "MaahiCabs - Empowering Women's Travel in Bengaluru",
-    description: "By women, for women. Experience the safest cab service in Bengaluru. Book your ride today.",
+    siteName: "Budget Cabs Service",
+    url: "https://www.budgetcabsservice.com/",
+    title: "Budget Cabs Service Nashik | Airport Transfer | Nashik-Mumbai-Pune Taxi",
+    description: "Affordable intercity taxi service from Nashik to Mumbai, Pune, and airport transfers. Reliable Nashik-Mumbai-Pune cabs, Malegaon taxi, and Mumbai Airport transfers. 24/7 availability.",
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "MaahiCabs - Safe & Reliable Female-Only Cab Service in Bengaluru",
+        alt: "Budget Cabs Service Nashik - Airport Transfer & Intercity Taxi Service",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MaahiCabs | Female-Only Cabs Bengaluru",
-    description: "Safe, professional, and reliable female-only cab service in Bengaluru. 24/7 availability.",
+    title: "Budget Cabs Service Nashik | Nashik-Mumbai-Pune Taxi & Airport Transfer",
+    description: "Affordable, professional taxi service from Nashik to Mumbai, Pune, and airport transfers. Nashik-Mumbai-Pune cabs, Malegaon taxi. 24/7 availability.",
     images: ["/opengraph-image"],
   },
   icons: {
@@ -65,6 +96,12 @@ export const metadata: Metadata = {
       { rel: 'android-chrome-512x512', url: '/android-chrome-512x512.png' },
     ],
   },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Budget Cabs Service',
+  },
 };
 
 export default function RootLayout({
@@ -75,38 +112,83 @@ export default function RootLayout({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "TaxiService",
-    "name": "MaahiCabs",
-    "description": "A premium female-only cab service operating in the Bengaluru area, ensuring safety and empowerment for women travelers.",
+    "name": "Budget Cabs Service",
+    "description": "Affordable intercity taxi service from Nashik to Mumbai, Pune, and airport transfers. Nashik-Mumbai-Pune cabs, Malegaon taxi, and reliable rides.",
     "provider": {
       "@type": "LocalBusiness",
-      "name": "MaahiCabs",
-      "image": "https://www.maahicabs.com/android-chrome-512x512.png",
-      "telePhone": "+91-9535238661",
+      "name": "Budget Cabs Service",
+      "image": "https://www.budgetcabsservice.com/android-chrome-512x512.png",
+      "telePhone": "+91-8600829292",
+      "email": "budgetcabsservice@gmail.com",
       "priceRange": "₹₹",
       "address": {
         "@type": "PostalAddress",
-        "addressLocality": "Bengaluru",
-        "addressRegion": "Karnataka",
+        "addressLocality": "Nashik",
+        "addressRegion": "Maharashtra",
         "addressCountry": "IN"
       }
     },
-    "areaServed": {
-      "@type": "City",
-      "name": "Bengaluru"
-    },
-    "founder": {
-      "@type": "Person",
-      "name": "Maahi Narender"
-    },
-    "sameAs": [
-      "https://www.instagram.com/_maahi_cabs/"
+    "areaServed": [
+      {
+        "@type": "City",
+        "name": "Nashik"
+      },
+      {
+        "@type": "City",
+        "name": "Mumbai"
+      },
+      {
+        "@type": "City",
+        "name": "Pune"
+      },
+      {
+        "@type": "City",
+        "name": "Malegaon"
+      },
+      {
+        "@type": "City",
+        "name": "Sinnar"
+      },
+      {
+        "@type": "City",
+        "name": "Igatpuri"
+      },
+      {
+        "@type": "City",
+        "name": "Trimbakeshwar"
+      },
+      {
+        "@type": "City",
+        "name": "Shirdi"
+      }
     ],
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "telephone": "+91-9535238661",
-      "contactType": "booking and customer service",
-      "availableLanguage": ["English", "Hindi", "Kannada"]
-    }
+    "serviceType": [
+      "Intercity Taxi Service",
+      "Airport Transfer",
+      "Nashik to Mumbai Taxi",
+      "Nashik to Pune Taxi",
+      "Mumbai Airport Transfer",
+      "Pune Airport Transfer",
+      "Outstation Taxi"
+    ],
+    "contactPoint": [
+      {
+        "@type": "ContactPoint",
+        "telephone": "+91-8600829292",
+        "contactType": "booking and customer service",
+        "availableLanguage": ["English", "Hindi", "Marathi"],
+        "areaServed": ["IN"],
+        "availableChannel": ["Phone", "WhatsApp"]
+      },
+      {
+        "@type": "ContactPoint",
+        "telephone": "+91-7977619481",
+        "contactType": "booking and customer service",
+        "availableLanguage": ["English", "Hindi", "Marathi"],
+        "areaServed": ["IN"],
+        "availableChannel": ["Phone", "WhatsApp"]
+      }
+    ]
   };
 
   return (
@@ -120,6 +202,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <EnvWarningBanner />
+        <PWAInstallPrompt />
         {children}
       </body>
     </html>

@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 
 // Route segment config
 export const runtime = 'edge';
-export const alt = 'MaahiCabs - Safe & Reliable Female-Only Cab Service in Bengaluru';
+export const alt = 'Budget Cabs Service - Affordable Mumbai to Nashik Taxi Service';
 export const size = {
   width: 1200,
   height: 630,
@@ -16,7 +16,7 @@ export default async function Image() {
       <div
         style={{
           fontSize: 60,
-          background: 'linear-gradient(135deg, #2E3192 0%, #3B3FA8 50%, #00A99D 100%)',
+          background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 50%, #4B5563 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -83,7 +83,7 @@ export default async function Image() {
               textAlign: 'center',
             }}
           >
-            MaahiCabs
+            Budget Cabs Service
           </h1>
           <div
             style={{
@@ -93,7 +93,7 @@ export default async function Image() {
               fontWeight: '600',
             }}
           >
-            Safe & Reliable
+            Affordable & Reliable
           </div>
         </div>
 
@@ -108,7 +108,7 @@ export default async function Image() {
             lineHeight: '1.4',
           }}
         >
-          Female-Only Cab Service in Bengaluru
+          Affordable Intercity Taxi Service - Mumbai to Nashik
         </div>
 
         {/* Bottom text */}
@@ -121,7 +121,7 @@ export default async function Image() {
             textAlign: 'center',
           }}
         >
-          By women, for women • Empowering Women's Travel
+          Mumbai Airport Transfers • Sharing Cabs • 24/7 Service
         </div>
       </div>
     ),

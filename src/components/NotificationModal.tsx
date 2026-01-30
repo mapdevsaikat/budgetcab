@@ -84,7 +84,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
         <div className="p-6 pt-0">
           <button
             onClick={onClose}
-            className="w-full bg-gradient-to-r from-maahi-brand to-maahi-accent text-white font-semibold py-3 rounded-xl hover:shadow-lg transition-all active:scale-[0.98]"
+            className="w-full bg-gradient-to-r from-budget-brand to-budget-accent text-white font-semibold py-3 rounded-xl hover:shadow-lg transition-all active:scale-[0.98]"
           >
             Got it
           </button>

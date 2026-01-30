@@ -13,7 +13,7 @@ interface MapProps {
     onMapReady?: (mapInstance: L.Map) => void;
 }
 
-const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, onMoveEnd, onLoad, onMapReady }) => {
+const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onMoveEnd, onLoad, onMapReady }) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<L.Map | null>(null);
     const userMarker = useRef<L.Marker | null>(null);
@@ -50,25 +50,25 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
         // Support both variable names for backward compatibility
         const apiKey = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || process.env.NEXT_PUBLIC_MAPTILER_KEY;
 
-        console.log('[MaahiCabs Map] Initializing Leaflet map...');
-        console.log('[MaahiCabs Map] API Key present:', !!apiKey);
-        console.log('[MaahiCabs Map] API Key length:', apiKey?.length || 0);
+        console.log('[budgetcab Map] Initializing Leaflet map...');
+        console.log('[budgetcab Map] API Key present:', !!apiKey);
+        console.log('[budgetcab Map] API Key length:', apiKey?.length || 0);
 
         if (!apiKey) {
-            console.error('[MaahiCabs Map] No API key found!');
+            console.error('[budgetcab Map] No API key found!');
             setError('MapTiler API key not found. Please add NEXT_PUBLIC_MAPTILER_API_KEY to your .env.local file.');
             return;
         }
 
         // Validate API key format (MapTiler keys are typically alphanumeric)
         if (apiKey.length < 10) {
-            console.error('[MaahiCabs Map] Invalid API key format!');
+            console.error('[budgetcab Map] Invalid API key format!');
             setError('Invalid MapTiler API key format. Please check your NEXT_PUBLIC_MAPTILER_API_KEY in .env.local');
             return;
         }
 
         try {
-            console.log('[MaahiCabs Map] Creating Leaflet map instance...');
+            console.log('[budgetcab Map] Creating Leaflet map instance...');
 
             // Initialize the map WITHOUT zoom control (we'll add custom controls later if needed)
             map.current = L.map(mapContainer.current, {
@@ -81,7 +81,7 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
 
             // Add error handler for tile loading errors
             map.current.on('tileerror', (error: any) => {
-                console.error('[MaahiCabs Map] Tile loading error:', error);
+                console.error('[budgetcab Map] Tile loading error:', error);
                 setError('Failed to load map tiles. Please check your MapTiler API key and internet connection.');
             });
 
@@ -91,15 +91,15 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
                     apiKey: apiKey,
                 }).addTo(map.current);
                 
-                console.log('[MaahiCabs Map] MapTiler layer added successfully');
+                console.log('[budgetcab Map] MapTiler layer added successfully');
             } catch (layerError) {
-                console.error('[MaahiCabs Map] Error creating MapTiler layer:', layerError);
+                console.error('[budgetcab Map] Error creating MapTiler layer:', layerError);
                 setError(`Failed to initialize MapTiler layer: ${layerError instanceof Error ? layerError.message : 'Unknown error'}. Please check your API key in .env.local (NEXT_PUBLIC_MAPTILER_API_KEY).`);
                 return;
             }
             // Setup event listeners
             map.current.on('load', () => {
-                console.log('[MaahiCabs Map] Map loaded successfully!');
+                console.log('[budgetcab Map] Map loaded successfully!');
                 mapLoadedRef.current = true;
                 setMapLoaded(true);
                 setError(null);
@@ -124,7 +124,7 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
                 // Mark that user has manually moved the map (unless it's auto-centering)
                 if (!isAutoCenteringRef.current) {
                     userHasInteractedRef.current = true;
-                    console.log('[MaahiCabs Map] User manually moved map');
+                    console.log('[budgetcab Map] User manually moved map');
                 }
             });
 
@@ -141,7 +141,7 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
 
             // For Leaflet, the map is ready after a short delay
             setTimeout(() => {
-                console.log('[MaahiCabs Map] Map ready!');
+                console.log('[budgetcab Map] Map ready!');
                 mapLoadedRef.current = true;
                 setMapLoaded(true);
                 setError(null);
@@ -168,13 +168,13 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
             // Use ref to check current state, not closure
             loadTimeoutRef.current = setTimeout(() => {
                 if (!mapLoadedRef.current) {
-                    console.error('[MaahiCabs Map] Map loading timeout');
+                    console.error('[budgetcab Map] Map loading timeout');
                     setError('Map loading timeout. Please check your API key and internet connection.');
                 }
             }, 10000);
 
         } catch (err) {
-            console.error('[MaahiCabs Map] Error initializing map:', err);
+            console.error('[budgetcab Map] Error initializing map:', err);
             setError(`Failed to initialize map: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
 
@@ -186,7 +186,7 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
             }
             
             if (map.current) {
-                console.log('[MaahiCabs Map] Cleaning up map instance');
+                console.log('[budgetcab Map] Cleaning up map instance');
                 if (userMarker.current) {
                     userMarker.current.remove();
                     userMarker.current = null;
@@ -211,7 +211,7 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
 
         // Check if geolocation is available
         if (!('geolocation' in navigator)) {
-            console.log('[MaahiCabs Map] Geolocation not available in this browser');
+            console.log('[budgetcab Map] Geolocation not available in this browser');
             // No location available, set map center to default
             if (onMoveEndRef.current && map.current) {
                 const center = map.current.getCenter();
@@ -220,7 +220,7 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
             return;
         }
 
-        console.log('[MaahiCabs Map] Requesting user location after map load...');
+        console.log('[budgetcab Map] Requesting user location after map load...');
         isCheckingLocationRef.current = true; // Start location check, prevent moveend events
         
         // Request user location permission and flyTo when granted
@@ -234,11 +234,11 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
                 const { latitude, longitude } = position.coords;
                 userLocationSetRef.current = true;
                 
-                console.log('[MaahiCabs Map] Location permission granted, user location:', latitude, longitude);
+                console.log('[budgetcab Map] Location permission granted, user location:', latitude, longitude);
                 
                 // Only fly to user location if they haven't manually interacted with the map yet
                 if (userHasInteractedRef.current) {
-                    console.log('[MaahiCabs Map] User has already interacted with map, skipping auto-center');
+                    console.log('[budgetcab Map] User has already interacted with map, skipping auto-center');
                     isCheckingLocationRef.current = false;
                     // Set mapCenter to current location
                     if (onMoveEndRef.current && map.current) {
@@ -249,7 +249,7 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
                 }
                 
                 isAutoCenteringRef.current = true;
-                console.log('[MaahiCabs Map] Flying to user location...');
+                console.log('[budgetcab Map] Flying to user location...');
                 
                 // Use setView with animation for smooth transition to user location
                 // Check if flyTo method exists (might be from a plugin), otherwise use setView
@@ -274,11 +274,11 @@ const Map: React.FC<MapProps> = ({ center = [12.963157, 77.577345], zoom = 17, o
                         const center = map.current.getCenter();
                         onMoveEndRef.current({ lat: center.lat, lng: center.lng });
                     }
-                    console.log('[MaahiCabs Map] Successfully centered on user location');
+                    console.log('[budgetcab Map] Successfully centered on user location');
                 }, 1600); // Wait for animation to complete (1500ms + 100ms buffer)
             },
             (error) => {
-                console.warn('[MaahiCabs Map] Geolocation error:', error.message);
+                console.warn('[budgetcab Map] Geolocation error:', error.message);
                 // Mark as attempted so we don't keep trying
                 userLocationSetRef.current = true;
                 isCheckingLocationRef.current = false; // Location check complete (failed)

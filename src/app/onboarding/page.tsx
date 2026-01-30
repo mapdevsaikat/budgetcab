@@ -80,13 +80,13 @@ export default function OnboardingPage() {
                 // LOGIN FLOW
                 authResponse = await supabase.auth.signInWithPassword({
                     email: formData.email,
-                    password: formData.password || `Maahi${formData.mobile}`,
+                    password: formData.password || `Budget${formData.mobile}`,
                 });
             } else {
                 // SIGNUP FLOW
                 authResponse = await supabase.auth.signUp({
                     email: formData.email,
-                    password: formData.password || `Maahi${formData.mobile}`,
+                    password: formData.password || `Budget${formData.mobile}`,
                     options: {
                         data: {
                             first_name: formData.first_name,
@@ -132,10 +132,10 @@ export default function OnboardingPage() {
             style={{ minHeight: '100dvh', maxHeight: '100dvh', overflowY: 'auto' }}
         >
             {/* Animated Background Gradient - Matching Welcome Page */}
-            <div className="absolute inset-0 bg-gradient-to-br from-maahi-brand via-[#3B3FA8] to-maahi-accent opacity-95">
+            <div className="absolute inset-0 bg-gradient-to-br from-budget-brand via-[#3B3FA8] to-budget-accent opacity-95">
                 {/* Animated circles for depth */}
-                <div className="absolute top-0 left-0 w-96 h-96 bg-maahi-accent/20 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute bottom-0 right-0 w-96 h-96 bg-maahi-warn/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute top-0 left-0 w-96 h-96 bg-budget-accent/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-0 right-0 w-96 h-96 bg-budget-warn/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/5 rounded-full blur-2xl"></div>
             </div>
 
@@ -164,11 +164,11 @@ export default function OnboardingPage() {
                             className="mx-auto block cursor-pointer hover:opacity-90 transition-opacity active:scale-95"
                         >
                             <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 sm:mb-4">
-                                <div className="absolute inset-0 bg-maahi-brand/10 rounded-2xl blur-xl"></div>
+                                <div className="absolute inset-0 bg-budget-brand/10 rounded-2xl blur-xl"></div>
                                 <div className="relative bg-white rounded-2xl p-3 sm:p-4 shadow-lg border border-gray-100">
                                     <img
                                         src="/android-chrome-192x192.png"
-                                        alt="MaahiCabs Logo"
+                                        alt="budgetcab Logo"
                                         className="w-full h-full object-contain"
                                     />
                                 </div>
@@ -178,9 +178,9 @@ export default function OnboardingPage() {
                         {/* Brand Name - Matching Booking Page Format */}
                         <div className="space-y-2">
                             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
-                                <span className="text-maahi-brand">Maah</span>
-                                <span className="text-maahi-warn">iC</span>
-                                <span className="text-maahi-accent">abs</span>
+                                <span className="text-budget-brand">Budget</span>
+                                <span className="text-budget-warn">Cab</span>
+                                <span className="text-white">s</span>
                             </h1>
                             <div className="flex items-center justify-center gap-2 text-gray-600">
                                 <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -190,7 +190,7 @@ export default function OnboardingPage() {
                                 <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
                             </div>
                             <p className="text-gray-500 text-xs sm:text-sm px-2">
-                                {isLogin ? 'Login to continue your safe & reliable journey' : 'Create an account to verify your profile'}
+                                {isLogin ? 'Login to continue your affordable & reliable journey' : 'Create an account to book your ride'}
                             </p>
                         </div>
                     </div>
@@ -204,7 +204,7 @@ export default function OnboardingPage() {
                                     <input
                                         name="first_name"
                                         required={!isLogin}
-                                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-maahi-brand focus:ring-2 focus:ring-maahi-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-sm sm:text-base text-gray-900"
+                                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-budget-brand focus:ring-2 focus:ring-budget-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-sm sm:text-base text-gray-900"
                                         placeholder="Name"
                                         value={formData.first_name}
                                         onChange={handleChange}
@@ -215,7 +215,7 @@ export default function OnboardingPage() {
                                     <input
                                         name="last_name"
                                         required={!isLogin}
-                                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-maahi-brand focus:ring-2 focus:ring-maahi-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-sm sm:text-base text-gray-900"
+                                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-budget-brand focus:ring-2 focus:ring-budget-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-sm sm:text-base text-gray-900"
                                         placeholder="Surname"
                                         value={formData.last_name}
                                         onChange={handleChange}
@@ -232,7 +232,7 @@ export default function OnboardingPage() {
                                     name="email"
                                     type="email"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-maahi-brand focus:ring-2 focus:ring-maahi-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-sm sm:text-base text-gray-900"
+                                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-budget-brand focus:ring-2 focus:ring-budget-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-sm sm:text-base text-gray-900"
                                     placeholder="user.name@example.com"
                                     value={formData.email}
                                     onChange={handleChange}
@@ -249,7 +249,7 @@ export default function OnboardingPage() {
                                         name="mobile"
                                         type="tel"
                                         required={!isLogin}
-                                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-maahi-brand focus:ring-2 focus:ring-maahi-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-sm sm:text-base text-gray-900"
+                                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-budget-brand focus:ring-2 focus:ring-budget-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-sm sm:text-base text-gray-900"
                                         placeholder="+91 98765 43210"
                                         value={formData.mobile}
                                         onChange={handleChange}
@@ -265,7 +265,7 @@ export default function OnboardingPage() {
                                     name="password"
                                     type={showPassword ? "text" : "password"}
                                     required
-                                    className="w-full px-4 py-3 pr-12 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-maahi-brand focus:ring-2 focus:ring-maahi-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-sm sm:text-base text-gray-900"
+                                    className="w-full px-4 py-3 pr-12 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-budget-brand focus:ring-2 focus:ring-budget-brand/20 outline-none transition-all placeholder:text-gray-400 font-medium text-sm sm:text-base text-gray-900"
                                     placeholder="••••••••"
                                     value={formData.password}
                                     onChange={handleChange}
@@ -273,7 +273,7 @@ export default function OnboardingPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-maahi-brand transition-colors rounded-lg hover:bg-gray-100"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-budget-brand transition-colors rounded-lg hover:bg-gray-100"
                                     aria-label={showPassword ? "Hide password" : "Show password"}
                                 >
                                     {showPassword ? (
@@ -285,7 +285,7 @@ export default function OnboardingPage() {
                             </div>
                             {!isLogin && (
                                 <p className="text-xs text-gray-400 mt-1">
-                                    If left blank, will default to "Maahi" + Mobile
+                                    If left blank, will default to "Budget" + Mobile
                                 </p>
                             )}
                         </div>
@@ -293,7 +293,7 @@ export default function OnboardingPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-maahi-brand text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 hover:bg-maahi-brand/90 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed mt-4 sm:mt-6 shadow-lg shadow-maahi-brand/30 min-h-[56px] sm:min-h-[64px]"
+                            className="w-full bg-budget-brand text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 hover:bg-budget-brand/90 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed mt-4 sm:mt-6 shadow-lg shadow-budget-brand/30 min-h-[56px] sm:min-h-[64px]"
                         >
                             {loading ? (
                                 <>
@@ -316,7 +316,7 @@ export default function OnboardingPage() {
                             <button
                                 type="button"
                                 onClick={() => setIsLogin(!isLogin)}
-                                className="font-bold text-maahi-brand hover:text-maahi-accent transition-colors underline underline-offset-2"
+                                className="font-bold text-budget-brand hover:text-budget-accent transition-colors underline underline-offset-2"
                             >
                                 {isLogin ? 'Sign Up' : 'Log In'}
                             </button>

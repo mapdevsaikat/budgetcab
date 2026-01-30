@@ -11,19 +11,61 @@ import LocationSearch from '@/components/LocationSearch';
 import BottomSheet from '@/components/BottomSheet';
 import NotificationModal from '@/components/NotificationModal';
 import { useBookingStore } from '@/store/useBookingStore';
-import { Calendar, Clock, ArrowRight, LogOut, User as UserIcon, Navigation, ChevronDown, X, Edit2, Home as HomeIcon, Briefcase } from 'lucide-react';
+import { Calendar, Clock, ArrowRight, LogOut, User as UserIcon, Navigation, ChevronDown, X, Edit2, Home as HomeIcon, Briefcase, Car, Route } from 'lucide-react';
 import { User } from '@supabase/supabase-js';
 import L from 'leaflet';
-import { generateBookingRef, calculateFare, getTimeSlotType, TimeSlotType } from '@/lib/booking';
+import { generateBookingRef, calculateFare, getTimeSlotType, TimeSlotType, calculateNights } from '@/lib/booking';
 
 // Feature flag: Show pricing to users (set to false to hide pricing)
 const SHOW_PRICING_TO_USERS = false;
 
-// Helper function to get tomorrow's date in YYYY-MM-DD format
-const getTomorrowDateString = (): string => {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return tomorrow.toISOString().split('T')[0];
+// Helper function to get today's date in YYYY-MM-DD format (local timezone, IST for Indian users)
+const getTodayDateString = (): string => {
+  const now = new Date();
+  // Get local date string in YYYY-MM-DD format
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Helper function to get minimum allowed date (today if 2+ hours remain, otherwise tomorrow)
+const getMinDateString = (): string => {
+  const now = new Date();
+  
+  // Check if there are at least 2 hours remaining today
+  const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+  
+  // If 2 hours from now is still today, allow today; otherwise require tomorrow
+  if (twoHoursFromNow <= endOfToday) {
+    return getTodayDateString();
+  } else {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+};
+
+// Helper function to get minimum allowed time (2 hours from now in local timezone)
+const getMinTimeString = (selectedDate: string): string => {
+  const now = new Date();
+  const todayString = getTodayDateString();
+  const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  
+  // If selected date is today, return 2 hours from now
+  if (selectedDate === todayString) {
+    const hours = String(twoHoursFromNow.getHours()).padStart(2, '0');
+    const minutes = String(twoHoursFromNow.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+  
+  // Otherwise, allow any time from 00:00
+  return '00:00';
 };
 
 export default function Home() {
@@ -34,8 +76,44 @@ export default function Home() {
   const [loadingAddress, setLoadingAddress] = useState(false);
   const [tempPickupDigipin, setTempPickupDigipin] = useState<string>(''); // Real-time DigiPin display
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Safe helper function to fly to a location
+  const safeFlyTo = (lat: number, lng: number, zoom: number = 16, options?: { duration?: number; easeLinearity?: number }) => {
+    if (!mapInstanceRef.current || !mapReady) {
+      console.warn('Map not ready, cannot fly to location');
+      return;
+    }
+
+    try {
+      const map = mapInstanceRef.current;
+      
+      // Check if map is properly initialized
+      if (!map || !map.getContainer || typeof map.getContainer !== 'function') {
+        console.warn('Map instance is not properly initialized');
+        return;
+      }
+
+      // Use setView with animation (native Leaflet method)
+      map.setView([lat, lng], zoom, {
+        animate: true,
+        duration: options?.duration || 1.5,
+        easeLinearity: options?.easeLinearity || 0.25
+      });
+    } catch (error) {
+      console.error('Error flying to location:', error);
+      // Fallback to simple setView without animation
+      try {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setView([lat, lng], zoom);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback setView also failed:', fallbackError);
+      }
+    }
+  };
 
   // Destination adjustment state
   const [isAdjustingDestination, setIsAdjustingDestination] = useState(false);
@@ -64,6 +142,7 @@ export default function Home() {
     night_hours: null,
     regular_time: null,
   });
+  const [nightStayRate, setNightStayRate] = useState<number>(500); // Default fallback
   const [calculatedFare, setCalculatedFare] = useState<number | null>(null);
   const [currentTimeSlot, setCurrentTimeSlot] = useState<TimeSlotType>('regular_time');
   const [loadingRoute, setLoadingRoute] = useState(false);
@@ -71,6 +150,16 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [selectedAmPm, setSelectedAmPm] = useState<'AM' | 'PM'>('AM');
+  
+  // Booking options state
+  const [selectedCabType, setSelectedCabType] = useState<string>('');
+  const [selectedTripType, setSelectedTripType] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  
+  // Vehicle types state (from database)
+  const [vehicleTypes, setVehicleTypes] = useState<Array<{ name: string; multiplier: number; display_order: number }>>([]);
+  const [vehicleMultiplierMap, setVehicleMultiplierMap] = useState<Record<string, number>>({});
 
   // Notification Modal State
   const [notification, setNotification] = useState<{
@@ -110,8 +199,9 @@ export default function Home() {
       }
     });
 
-    // Fetch pricing rules
+    // Fetch pricing rules and vehicle types
     fetchPricingRules();
+    fetchVehicleTypes();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -200,18 +290,28 @@ export default function Home() {
     return null;
   };
 
-  // Recalculate fare when time, date, distance, or pricing rules change
+  // Recalculate fare when time, date, distance, pricing rules, cab type, or dates change
   useEffect(() => {
     console.log('🔄 Fare recalculation triggered:', {
       selectedDate,
       selectedTime,
       selectedAmPm,
       distance,
+      selectedCabType,
+      startDate,
+      endDate,
       hasPricingRules: !!pricingRules.regular_time
     });
 
     if (!distance || !pricingRules.regular_time) {
       console.log('⚠️ Missing distance or pricing rules');
+      setCalculatedFare(null);
+      return;
+    }
+
+    // Don't calculate if cab type is not selected yet
+    if (!selectedCabType) {
+      console.log('⚠️ Cab type not selected');
       setCalculatedFare(null);
       return;
     }
@@ -242,30 +342,68 @@ export default function Home() {
       
       // Get pricing from matched rule or fallback
       let currentPricing;
+      let ruleNightStayRate = nightStayRate; // Default to global night stay rate
+      
       if (matchedRule) {
         currentPricing = {
           base_fare: matchedRule.base_fare,
           per_km_rate: matchedRule.per_km_rate
         };
+        // Use night_stay_rate from matched rule if available, otherwise use global
+        if (matchedRule.night_stay_rate != null) {
+          ruleNightStayRate = matchedRule.night_stay_rate;
+        }
       } else {
         currentPricing = pricingRules[timeSlot] || pricingRules.regular_time || { base_fare: 50, per_km_rate: 15 };
       }
       
-      console.log('💰 Pricing for', timeSlot, ':', currentPricing);
+      // Get vehicle multiplier from database
+      const vehicleMultiplier = selectedCabType && vehicleMultiplierMap[selectedCabType] 
+        ? vehicleMultiplierMap[selectedCabType] 
+        : 1.0;
       
-      // Calculate fare
-      const fare = calculateFare(distance, currentPricing.base_fare, currentPricing.per_km_rate, timeSlot);
+      console.log('💰 Pricing for', timeSlot, ':', currentPricing);
+      console.log('🚗 Cab type:', selectedCabType, 'Multiplier:', vehicleMultiplier);
+      console.log('📅 Start date:', startDate, 'End date:', endDate);
+      console.log('🌙 Night stay rate:', ruleNightStayRate);
+      
+      // Calculate fare with vehicle type and night stay
+      const fare = calculateFare(
+        distance, 
+        currentPricing.base_fare, 
+        currentPricing.per_km_rate, 
+        timeSlot,
+        vehicleMultiplier, // Pass multiplier value instead of cabType string
+        startDate || selectedDate,
+        endDate,
+        ruleNightStayRate // Use rule-specific or global night stay rate
+      );
+      
       console.log('✅ Calculated fare:', fare);
       setCalculatedFare(fare);
     } catch (error) {
       console.error('❌ Error recalculating fare:', error);
       // Fallback to regular time pricing
       const fallbackPricing = pricingRules.regular_time || { base_fare: 50, per_km_rate: 15 };
-      const fare = calculateFare(distance, fallbackPricing.base_fare, fallbackPricing.per_km_rate, 'regular_time');
+      // Get vehicle multiplier from database
+      const vehicleMultiplier = selectedCabType && vehicleMultiplierMap[selectedCabType] 
+        ? vehicleMultiplierMap[selectedCabType] 
+        : 1.0;
+      
+      const fare = calculateFare(
+        distance, 
+        fallbackPricing.base_fare, 
+        fallbackPricing.per_km_rate, 
+        'regular_time',
+        vehicleMultiplier,
+        startDate || selectedDate,
+        endDate,
+        nightStayRate
+      );
       setCalculatedFare(fare);
       setCurrentTimeSlot('regular_time');
     }
-  }, [selectedDate, selectedTime, selectedAmPm, distance, pricingRules]);
+  }, [selectedDate, selectedTime, selectedAmPm, distance, pricingRules, selectedCabType, startDate, endDate, nightStayRate, vehicleMultiplierMap]);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
@@ -324,11 +462,83 @@ export default function Home() {
     }
   };
 
+  const fetchVehicleTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vehicle_types')
+        .select('name, multiplier, display_order')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching vehicle types:', error);
+        // Use fallback defaults if fetch fails
+        const fallbackVehicles = [
+          { name: 'Maruti Swift Dzire Or Similar CNG', multiplier: 1.0, display_order: 1 },
+          { name: 'Maruti Swift Dzire Or Similar Diesel', multiplier: 1.1, display_order: 2 },
+          { name: 'Maruti Ertiga Or Similar', multiplier: 1.3, display_order: 3 },
+          { name: 'Toyota Innova | Mahindra Marazzo', multiplier: 1.5, display_order: 4 },
+          { name: 'Toyota Innova Crysta', multiplier: 1.6, display_order: 5 },
+          { name: 'Tempo Traveller 17 Seater', multiplier: 2.0, display_order: 6 },
+          { name: 'Tempo Traveller 26 Seater', multiplier: 2.5, display_order: 7 },
+        ];
+        setVehicleTypes(fallbackVehicles);
+        const fallbackMap: Record<string, number> = {};
+        fallbackVehicles.forEach(v => { fallbackMap[v.name] = v.multiplier; });
+        setVehicleMultiplierMap(fallbackMap);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        setVehicleTypes(data);
+        // Create a map for quick lookup
+        const multiplierMap: Record<string, number> = {};
+        data.forEach((vehicle: any) => {
+          multiplierMap[vehicle.name] = vehicle.multiplier;
+        });
+        setVehicleMultiplierMap(multiplierMap);
+        console.log('Vehicle types loaded from database:', data);
+      } else {
+        console.warn('No vehicle types found in database. Using defaults.');
+        // Use fallback defaults
+        const fallbackVehicles = [
+          { name: 'Maruti Swift Dzire Or Similar CNG', multiplier: 1.0, display_order: 1 },
+          { name: 'Maruti Swift Dzire Or Similar Diesel', multiplier: 1.1, display_order: 2 },
+          { name: 'Maruti Ertiga Or Similar', multiplier: 1.3, display_order: 3 },
+          { name: 'Toyota Innova | Mahindra Marazzo', multiplier: 1.5, display_order: 4 },
+          { name: 'Toyota Innova Crysta', multiplier: 1.6, display_order: 5 },
+          { name: 'Tempo Traveller 17 Seater', multiplier: 2.0, display_order: 6 },
+          { name: 'Tempo Traveller 26 Seater', multiplier: 2.5, display_order: 7 },
+        ];
+        setVehicleTypes(fallbackVehicles);
+        const fallbackMap: Record<string, number> = {};
+        fallbackVehicles.forEach(v => { fallbackMap[v.name] = v.multiplier; });
+        setVehicleMultiplierMap(fallbackMap);
+      }
+    } catch (error) {
+      console.error('Failed to fetch vehicle types:', error);
+      // Use fallback defaults
+      const fallbackVehicles = [
+        { name: 'Maruti Swift Dzire Or Similar CNG', multiplier: 1.0, display_order: 1 },
+        { name: 'Maruti Swift Dzire Or Similar Diesel', multiplier: 1.1, display_order: 2 },
+        { name: 'Maruti Ertiga Or Similar', multiplier: 1.3, display_order: 3 },
+        { name: 'Toyota Innova | Mahindra Marazzo', multiplier: 1.5, display_order: 4 },
+        { name: 'Toyota Innova Crysta', multiplier: 1.6, display_order: 5 },
+        { name: 'Tempo Traveller 17 Seater', multiplier: 2.0, display_order: 6 },
+        { name: 'Tempo Traveller 26 Seater', multiplier: 2.5, display_order: 7 },
+      ];
+      setVehicleTypes(fallbackVehicles);
+      const fallbackMap: Record<string, number> = {};
+      fallbackVehicles.forEach(v => { fallbackMap[v.name] = v.multiplier; });
+      setVehicleMultiplierMap(fallbackMap);
+    }
+  };
+
   const fetchPricingRules = async () => {
     try {
       const { data, error } = await supabase
         .from('pricing_rules')
-        .select('id, base_fare, per_km_rate, time_slot_type, start_time, end_time, priority')
+        .select('id, base_fare, per_km_rate, time_slot_type, start_time, end_time, priority, night_stay_rate')
         .order('priority', { ascending: false });
       
       if (error) {
@@ -352,6 +562,10 @@ export default function Home() {
       if (data && data.length > 0) {
         // Store all rules for time-based lookup
         (window as any).pricingRulesData = data;
+        
+        // Extract night stay rate from first rule that has it, or use default
+        const nightStayRateFromDB = data.find((rule: any) => rule.night_stay_rate != null)?.night_stay_rate || 500;
+        setNightStayRate(nightStayRateFromDB);
         
         // Also keep simplified rules for fallback
         const rules: {
@@ -477,64 +691,72 @@ export default function Home() {
   // Initialize date to tomorrow when booking sheet opens (bookings must be made a day before)
   useEffect(() => {
     if (isBookingSheetOpen && !selectedDate) {
-      const tomorrow = getTomorrowDateString();
-      setSelectedDate(tomorrow);
-      // Set default time to 9 AM for tomorrow's booking
-      setSelectedTime('09:00');
-      setSelectedAmPm('AM');
+      const minDate = getMinDateString();
+      setSelectedDate(minDate);
+      // Set default time based on minimum allowed time
+      const minTime = getMinTimeString(minDate);
+      setSelectedTime(minTime);
+      const [hours] = minTime.split(':');
+      setSelectedAmPm(parseInt(hours) >= 12 ? 'PM' : 'AM');
+      // Initialize start_date with selectedDate
+      if (!startDate) {
+        setStartDate(minDate);
+      }
     }
   }, [isBookingSheetOpen, selectedDate]);
 
-  // Get minimum time (bookings must be made a day before, so any time is allowed)
+  // Sync startDate with selectedDate when selectedDate changes
+  useEffect(() => {
+    if (selectedDate && !startDate) {
+      setStartDate(selectedDate);
+    }
+  }, [selectedDate]);
+
+  // Get minimum time based on selected date (2 hours from now if today, otherwise 00:00)
   const getMinTime = () => {
-    // Since bookings must be at least one day in advance, any time is allowed
-    return '00:00';
+    if (!selectedDate) return '00:00';
+    return getMinTimeString(selectedDate);
   };
 
-  // Validate if selected datetime is at least one day in the future
+  // Validate if selected datetime is at least 2 hours in the future (local timezone, IST for Indian users)
   const isValidDateTime = () => {
     if (!selectedDate || !selectedTime) return false;
     
-    // Time input is already in 24-hour format matching the AM/PM selection
-    // (because AM/PM buttons adjust the time value)
-    const dateTimeString = `${selectedDate}T${selectedTime}:00`;
-    const selectedDateTime = new Date(dateTimeString);
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0); // Start of tomorrow
-    
-    // Booking must be at least one day in advance
-    return selectedDateTime >= tomorrow;
-  };
+    try {
+      // Parse time and convert to 24-hour format
+      const [hours, minutes] = selectedTime.split(':');
+      if (!hours || !minutes) return false;
 
-  // Check and update date to tomorrow if selected datetime is in the past
-  // This ensures that when time crosses midnight, the date automatically moves to the next day
-  // Also applies 15-minute buffer logic (same as getMinTime but for tomorrow)
-  useEffect(() => {
-    if (!selectedDate || !selectedTime) return;
-    
-    const selectedDateTime = new Date(`${selectedDate}T${selectedTime}:00`);
-    const now = new Date();
-    const minTimeWithBuffer = new Date(now.getTime() + 15 * 60 * 1000); // Current time + 15 minutes
-    
-    // If selected datetime is in the past or less than 15 minutes from now, adjust it
-    if (selectedDateTime <= minTimeWithBuffer) {
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowString = tomorrow.toISOString().split('T')[0];
+      const hour24 = selectedAmPm === 'PM' && parseInt(hours) !== 12 
+        ? parseInt(hours) + 12 
+        : selectedAmPm === 'AM' && parseInt(hours) === 12 
+          ? 0 
+          : parseInt(hours);
+
+      // Create date string in ISO format
+      let dateString = selectedDate;
+      if (!dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const parsedDate = new Date(dateString);
+        if (isNaN(parsedDate.getTime())) return false;
+        dateString = parsedDate.toISOString().split('T')[0];
+      }
+
+      const dateTimeString = `${dateString}T${String(hour24).padStart(2, '0')}:${minutes}:00`;
+      const selectedDateTime = new Date(dateTimeString);
       
-      // Apply 15-minute buffer logic: current time + 15 minutes
-      const minBufferTime = new Date(now.getTime() + 15 * 60 * 1000);
-      const hours = String(minBufferTime.getHours()).padStart(2, '0');
-      const minutes = String(minBufferTime.getMinutes()).padStart(2, '0');
-      const adjustedTime = `${hours}:${minutes}`;
+      // Validate date is valid
+      if (isNaN(selectedDateTime.getTime())) return false;
       
-      setSelectedDate(tomorrowString);
-      setSelectedTime(adjustedTime);
-      const adjustedHours = minBufferTime.getHours();
-      setSelectedAmPm(adjustedHours >= 12 ? 'PM' : 'AM');
+      // Check if at least 2 hours in the future (local timezone, IST for Indian users)
+      const now = new Date();
+      const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+      
+      return selectedDateTime >= twoHoursFromNow;
+    } catch (error) {
+      console.error('Error validating datetime:', error);
+      return false;
     }
-  }, [selectedDate, selectedTime]); // Check when either date or time changes
+  };
 
   // Helper function to get current time slot using database time ranges
   const getCurrentTimeSlot = (): TimeSlotType => {
@@ -637,42 +859,95 @@ export default function Home() {
       return;
     }
 
+    if (!selectedCabType || !selectedTripType || !startDate) {
+      showNotification('error', 'Missing Information', 'Please select cab type, trip type, and start date');
+      return;
+    }
+
     setBookingInProgress(true);
 
     try {
       // Generate booking reference
       const bookingRef = generateBookingRef();
       
-      // Use selected date and time or default to 1 hour from now
-      // Time input is already in 24-hour format matching the AM/PM selection
-      let scheduledTime: Date;
-      if (selectedDate && selectedTime) {
-        const [hours, minutes] = selectedTime.split(':');
-        const hour24 = selectedAmPm === 'PM' && parseInt(hours) !== 12 
-          ? parseInt(hours) + 12 
-          : selectedAmPm === 'AM' && parseInt(hours) === 12 
-            ? 0 
-            : parseInt(hours);
-        scheduledTime = new Date(`${selectedDate}T${String(hour24).padStart(2, '0')}:${minutes}:00`);
-        
-        // Validate that scheduled time is in the future
-        const now = new Date();
-        if (scheduledTime <= now) {
-          showNotification('error', 'Invalid Time', 'Please select a future date and time. The selected time has already passed.');
+      // Use startDate and selectedTime to create scheduled time
+      // Ensure we have valid date and time
+      if (!startDate || !selectedTime) {
+        showNotification('error', 'Missing Information', 'Please select both start date and time');
+        setBookingInProgress(false);
+        return;
+      }
+
+      // Parse time and convert to 24-hour format
+      const [hours, minutes] = selectedTime.split(':');
+      if (!hours || !minutes) {
+        showNotification('error', 'Invalid Time', 'Please select a valid time');
+        setBookingInProgress(false);
+        return;
+      }
+
+      const hour24 = selectedAmPm === 'PM' && parseInt(hours) !== 12 
+        ? parseInt(hours) + 12 
+        : selectedAmPm === 'AM' && parseInt(hours) === 12 
+          ? 0 
+          : parseInt(hours);
+
+      // Create date string in ISO format (YYYY-MM-DD)
+      // Ensure startDate is in correct format
+      let dateString = startDate;
+      if (!dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // If not in YYYY-MM-DD format, try to parse it
+        const parsedDate = new Date(dateString);
+        if (isNaN(parsedDate.getTime())) {
+          showNotification('error', 'Invalid Date', 'Please select a valid date');
           setBookingInProgress(false);
           return;
         }
-      } else {
-        scheduledTime = new Date();
-        scheduledTime.setHours(scheduledTime.getHours() + 1);
+        dateString = parsedDate.toISOString().split('T')[0];
       }
 
-      // Use the already calculated fare (which is based on selected time)
+      // Create scheduled time in IST (local timezone)
+      // Use local timezone to avoid timezone conversion issues
+      const scheduledTimeString = `${dateString}T${String(hour24).padStart(2, '0')}:${minutes}:00`;
+      const scheduledTime = new Date(scheduledTimeString);
+      
+      // Validate that the date is valid
+      if (isNaN(scheduledTime.getTime())) {
+        showNotification('error', 'Invalid Date/Time', 'The selected date and time combination is invalid. Please try again.');
+        setBookingInProgress(false);
+        return;
+      }
+      
+      // Validate that scheduled time is at least 2 hours in the future (local timezone, IST for Indian users)
+      const now = new Date();
+      const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+      
+      if (scheduledTime < twoHoursFromNow) {
+        showNotification('error', 'Invalid Time', 'Bookings must be made at least 2 hours in advance. Please select a later time.');
+        setBookingInProgress(false);
+        return;
+      }
+
+      // Use the already calculated fare (which is based on selected time, cab type, and dates)
       const totalPrice = calculatedFare || (() => {
         // Fallback calculation if calculatedFare is null
         const timeSlotType = getTimeSlotType(scheduledTime);
         const currentPricing = pricingRules[timeSlotType] || pricingRules.regular_time || { base_fare: 50, per_km_rate: 15 };
-        return calculateFare(distance, currentPricing.base_fare, currentPricing.per_km_rate, timeSlotType);
+        // Get vehicle multiplier from database
+        const vehicleMultiplier = selectedCabType && vehicleMultiplierMap[selectedCabType] 
+          ? vehicleMultiplierMap[selectedCabType] 
+          : 1.0;
+        
+        return calculateFare(
+          distance, 
+          currentPricing.base_fare, 
+          currentPricing.per_km_rate, 
+          timeSlotType,
+          vehicleMultiplier,
+          startDate || selectedDate,
+          endDate,
+          nightStayRate
+        );
       })();
 
       // Create booking record
@@ -704,6 +979,23 @@ export default function Home() {
       }
 
       if (data) {
+        // Create booking options record
+        const { error: optionsError } = await supabase
+          .from('booking_options')
+          .insert({
+            booking_id: data.id,
+            cab_type: selectedCabType,
+            trip_type: selectedTripType,
+            start_date: startDate,
+            end_date: endDate || null,
+          });
+
+        if (optionsError) {
+          console.error('Error creating booking options:', optionsError);
+          // Don't fail the booking if options fail, but log it
+          showNotification('info', 'Booking Created', 'Booking created successfully, but some options may not have been saved.');
+        }
+
         // Reset booking state
         setIsBookingSheetOpen(false);
         setPickup(null);
@@ -713,6 +1005,10 @@ export default function Home() {
         setSelectedDate('');
         setSelectedTime('');
         setSelectedAmPm('AM');
+        setSelectedCabType('');
+        setSelectedTripType('');
+        setStartDate('');
+        setEndDate('');
         
         // Redirect to booking status page
         router.push(`/profile/booking-status?ref=${bookingRef}`);
@@ -751,16 +1047,50 @@ export default function Home() {
     setSelectedDate('');
     setSelectedTime('');
     setSelectedAmPm('AM');
+    setSelectedCabType('');
+    setSelectedTripType('');
+    setStartDate('');
+    setEndDate('');
     
     // Fly back to pickup location if it exists, otherwise keep current view
-    if (pickup && mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([pickup.latitude, pickup.longitude], 16, {
+    if (pickup) {
+      safeFlyTo(pickup.latitude, pickup.longitude, 16, {
         duration: 1.5,
         easeLinearity: 0.25
       });
     }
     
     console.log('Pickup location unlocked - user can now edit');
+  };
+
+  // Edit destination - allow user to change destination even after confirmation
+  const handleEditDestination = () => {
+    if (!drop) return;
+    
+    // Store current destination location before clearing
+    const currentDrop = { ...drop };
+    
+    // Set current destination as temp destination for adjustment
+    setTempDestination(currentDrop);
+    setIsAdjustingDestination(true);
+    
+    // Clear the confirmed destination temporarily
+    setDrop(null);
+    setDistance(null);
+    setRouteGeometry(null);
+    
+    // Close booking sheet if open
+    setIsBookingSheetOpen(false);
+    
+    // Fly to destination location for editing
+    safeFlyTo(currentDrop.latitude, currentDrop.longitude, 16, {
+      duration: 1.5,
+      easeLinearity: 0.25
+    });
+    // Update map center to the destination location
+    setMapCenter({ lat: currentDrop.latitude, lng: currentDrop.longitude });
+    
+    console.log('Destination editing enabled - user can now adjust');
   };
 
   // Confirm PICKUP location - NO API call, just use DigiPin
@@ -831,6 +1161,7 @@ export default function Home() {
           onLoad={() => console.log('Map Loaded')}
           onMapReady={(mapInstance) => {
             mapInstanceRef.current = mapInstance;
+            setMapReady(true);
             console.log('Map instance ready for control');
           }}
         />
@@ -842,11 +1173,11 @@ export default function Home() {
             <div className="relative">
               {/* Outer pulsing ring - Green for destination adjustment, Orange for pickup */}
               <span className="relative flex h-5 w-5">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isAdjustingDestination ? 'bg-green-500' : 'bg-maahi-accent'} opacity-75`}></span>
-                <span className={`relative inline-flex rounded-full h-5 w-5 ${isAdjustingDestination ? 'bg-green-500' : 'bg-maahi-accent'} border-2 border-white shadow-xl`}></span>
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isAdjustingDestination ? 'bg-green-500' : 'bg-budget-accent'} opacity-75`}></span>
+                <span className={`relative inline-flex rounded-full h-5 w-5 ${isAdjustingDestination ? 'bg-green-500' : 'bg-budget-accent'} border-2 border-white shadow-xl`}></span>
               </span>
               {/* Pin stem */}
-              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-0.5 w-1 h-6 ${isAdjustingDestination ? 'bg-green-600' : 'bg-maahi-brand/80'} rounded-full shadow-lg`}></div>
+              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-0.5 w-1 h-6 ${isAdjustingDestination ? 'bg-green-600' : 'bg-budget-brand/80'} rounded-full shadow-lg`}></div>
               {/* Pin tip shadow */}
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-1.5 bg-black/15 rounded-full blur-sm"></div>
             </div>
@@ -875,7 +1206,7 @@ export default function Home() {
             >
               <img src="/android-chrome-192x192.png" alt="Logo" className="w-4 h-4 sm:w-5 sm:h-5 rounded-md flex-shrink-0" />
               <h1 className="text-sm sm:text-base font-bold leading-none whitespace-nowrap">
-                <span className="text-maahi-brand">Maah</span><span className="text-maahi-warn">iC</span><span className="text-maahi-accent">abs</span>
+                <span className="text-budget-brand">Budget</span><span className="text-budget-warn">Cab</span><span className="text-white">s</span>
               </h1>
             </button>
 
@@ -886,7 +1217,7 @@ export default function Home() {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center gap-1 sm:gap-1.5 bg-white/95 backdrop-blur-md px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full shadow-md border border-white/50 hover:bg-white transition-colors"
                   >
-                    <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-maahi-brand flex-shrink-0" />
+                    <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-budget-brand flex-shrink-0" />
                     <span className="text-[10px] sm:text-xs font-bold text-gray-800 whitespace-nowrap hidden xs:inline">
                       {profile?.first_name || 'User'}
                     </span>
@@ -925,7 +1256,7 @@ export default function Home() {
                   )}
                 </div>
               ) : (
-                <a href="/onboarding" className="text-xs font-bold text-maahi-brand bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-white/50 hover:bg-white transition-colors">
+                <a href="/onboarding" className="text-xs font-bold text-budget-brand bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-white/50 hover:bg-white transition-colors">
                   Login / Signup
                 </a>
               )}
@@ -947,8 +1278,8 @@ export default function Home() {
                       const selectedDigipin = loc.digipin || digipin.getDIGIPINFromLatLon(loc.latitude, loc.longitude);
                       
                       // Fly to selected location on map
-                      if (mapInstanceRef.current && loc.latitude && loc.longitude) {
-                        mapInstanceRef.current.flyTo([loc.latitude, loc.longitude], 17, {
+                      if (loc.latitude && loc.longitude) {
+                        safeFlyTo(loc.latitude, loc.longitude, 17, {
                           duration: 1.5,
                           easeLinearity: 0.25
                         });
@@ -992,7 +1323,7 @@ export default function Home() {
               {pickupLocked ? (
                 <button
                   onClick={handleUnlockPickup}
-                  className="flex-shrink-0 bg-maahi-brand hover:bg-maahi-brand/90 active:scale-95 p-2.5 rounded-full shadow-lg transition-all"
+                  className="flex-shrink-0 bg-budget-brand hover:bg-budget-brand/90 active:scale-95 p-2.5 rounded-full shadow-lg transition-all"
                   title="Edit pickup location"
                 >
                   <Edit2 className="w-4 h-4 text-white" />
@@ -1006,12 +1337,10 @@ export default function Home() {
                           const { latitude, longitude } = position.coords;
                           
                           // Fly to user location
-                          if (mapInstanceRef.current) {
-                            mapInstanceRef.current.flyTo([latitude, longitude], 17, {
-                              duration: 2,
-                              easeLinearity: 0.25
-                            });
-                          }
+                          safeFlyTo(latitude, longitude, 17, {
+                            duration: 2,
+                            easeLinearity: 0.25
+                          });
 
                           setMapCenter({ lat: latitude, lng: longitude });
                         },
@@ -1037,63 +1366,78 @@ export default function Home() {
             </div>
 
             {/* Destination - Always visible, but disabled until pickup locked */}
-            <div className="relative flex-shrink-0">
-              <LocationSearch
-                placeholder={pickupLocked && !isAdjustingDestination ? "Search Destination or Digipin" : "Search Destination or Digipin"}
-                disabled={!pickupLocked || isAdjustingDestination}
-                highlight={highlightDropoff && pickupLocked && !drop}
-                onSelect={(loc) => {
-                if (pickupLocked && !isAdjustingDestination) {
-                  // Stop highlighting when user selects a location
-                  setHighlightDropoff(false);
-                  
-                  console.log('Selected destination from autocomplete:', loc);
-                  
-                  // FlyTo destination on map
-                  if (mapInstanceRef.current && loc.latitude && loc.longitude) {
-                    mapInstanceRef.current.flyTo([loc.latitude, loc.longitude], 16, {
-                      duration: 1.5,
-                      easeLinearity: 0.25
-                    });
-                    
-                    // Set as temporary destination for adjustment
-                    setTempDestination(loc);
-                    setIsAdjustingDestination(true);
-                    
-                    console.log('Flying to destination. User can now adjust pin.');
-                  }
-                }
-              }}
-              value={drop?.address}
-              onClear={() => {
-                if (pickupLocked && !isAdjustingDestination) {
-                  setDrop(null);
-                  setDistance(null);
-                  setRouteGeometry(null);
-                  
-                  // If map center exists, set temp destination so user can confirm the pin position
-                  if (mapCenter) {
-                    const destinationDigipin = digipin.getDIGIPINFromLatLon(mapCenter.lat, mapCenter.lng);
-                    setTempDestination({
-                      latitude: mapCenter.lat,
-                      longitude: mapCenter.lng,
-                      address: destinationDigipin,
-                      digipin: destinationDigipin,
-                    });
-                    setIsAdjustingDestination(true);
-                  } else {
-                    setTempDestination(null);
-                    setIsAdjustingDestination(false);
-                  }
-                  
-                  // Re-highlight when cleared
-                  setHighlightDropoff(true);
-                  setTimeout(() => {
-                    setHighlightDropoff(false);
-                  }, 5000);
-                }
-              }}
-            />
+            <div className="relative flex-shrink-0 flex items-center gap-2">
+              <div className="flex-1">
+                <LocationSearch
+                  placeholder={pickupLocked && !isAdjustingDestination ? (drop ? drop.address : "Search Destination or Digipin") : "City/Places/Digipin"}
+                  disabled={!pickupLocked || isAdjustingDestination}
+                  highlight={highlightDropoff && pickupLocked && !drop}
+                  onSelect={(loc) => {
+                    if (pickupLocked && !isAdjustingDestination) {
+                      // Stop highlighting when user selects a location
+                      setHighlightDropoff(false);
+                      
+                      console.log('Selected destination from autocomplete:', loc);
+                      
+                      // FlyTo destination on map
+                      if (loc.latitude && loc.longitude) {
+                        safeFlyTo(loc.latitude, loc.longitude, 16, {
+                          duration: 1.5,
+                          easeLinearity: 0.25
+                        });
+                        
+                        // Set as temporary destination for adjustment
+                        setTempDestination(loc);
+                        setIsAdjustingDestination(true);
+                        
+                        console.log('Flying to destination. User can now adjust pin.');
+                      }
+                    }
+                  }}
+                  value={drop?.address}
+                  onClear={() => {
+                    if (pickupLocked && !isAdjustingDestination) {
+                      setDrop(null);
+                      setDistance(null);
+                      setRouteGeometry(null);
+                      
+                      // Close booking sheet if open
+                      setIsBookingSheetOpen(false);
+                      
+                      // If map center exists, set temp destination so user can confirm the pin position
+                      if (mapCenter) {
+                        const destinationDigipin = digipin.getDIGIPINFromLatLon(mapCenter.lat, mapCenter.lng);
+                        setTempDestination({
+                          latitude: mapCenter.lat,
+                          longitude: mapCenter.lng,
+                          address: destinationDigipin,
+                          digipin: destinationDigipin,
+                        });
+                        setIsAdjustingDestination(true);
+                      } else {
+                        setTempDestination(null);
+                        setIsAdjustingDestination(false);
+                      }
+                      
+                      // Re-highlight when cleared
+                      setHighlightDropoff(true);
+                      setTimeout(() => {
+                        setHighlightDropoff(false);
+                      }, 5000);
+                    }
+                  }}
+                />
+              </div>
+              {pickupLocked && drop && !isAdjustingDestination && (
+                <button
+                  onClick={handleEditDestination}
+                  className="flex-shrink-0 bg-budget-accent hover:bg-budget-accent/90 active:scale-95 p-2.5 rounded-full shadow-lg transition-all"
+                  title="Edit destination location"
+                >
+                  <Edit2 className="w-4 h-4 text-white" />
+                </button>
+              )}
+            </div>
             
             {/* Quick-select buttons for saved addresses - Below destination search */}
             {pickupLocked && !isAdjustingDestination && !drop && (savedAddresses.home || savedAddresses.work) && (
@@ -1115,12 +1459,10 @@ export default function Home() {
                       };
                       
                       // Fly to home location
-                      if (mapInstanceRef.current) {
-                        mapInstanceRef.current.flyTo([homeAddr.latitude, homeAddr.longitude], 16, {
-                          duration: 1.5,
-                          easeLinearity: 0.25
-                        });
-                      }
+                      safeFlyTo(homeAddr.latitude, homeAddr.longitude, 16, {
+                        duration: 1.5,
+                        easeLinearity: 0.25
+                      });
                       
                       setTempDestination(destination);
                       setIsAdjustingDestination(true);
@@ -1130,7 +1472,7 @@ export default function Home() {
                     className="w-full flex items-center gap-2 sm:gap-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 px-3 sm:px-4 py-2 sm:py-3 hover:shadow-lg hover:bg-white transition-all active:scale-[0.98] text-left"
                   >
                     <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                      <HomeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-maahi-brand" />
+                      <HomeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-budget-brand" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs sm:text-sm font-bold text-gray-800">Home</p>
@@ -1155,12 +1497,10 @@ export default function Home() {
                       };
                       
                       // Fly to work location
-                      if (mapInstanceRef.current) {
-                        mapInstanceRef.current.flyTo([workAddr.latitude, workAddr.longitude], 16, {
-                          duration: 1.5,
-                          easeLinearity: 0.25
-                        });
-                      }
+                      safeFlyTo(workAddr.latitude, workAddr.longitude, 16, {
+                        duration: 1.5,
+                        easeLinearity: 0.25
+                      });
                       
                       setTempDestination(destination);
                       setIsAdjustingDestination(true);
@@ -1170,7 +1510,7 @@ export default function Home() {
                     className="w-full flex items-center gap-2 sm:gap-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-md border border-gray-100 px-3 sm:px-4 py-2 sm:py-3 hover:shadow-lg hover:bg-white transition-all active:scale-[0.98] text-left"
                   >
                     <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                      <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-maahi-accent" />
+                      <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-budget-accent" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs sm:text-sm font-bold text-gray-800">Work</p>
@@ -1183,14 +1523,13 @@ export default function Home() {
             
             {/* Hint message when pickup is locked but drop-off not selected and no saved addresses */}
             {pickupLocked && !drop && !isAdjustingDestination && !savedAddresses.home && !savedAddresses.work && (
-              <div className="mt-2 px-3 py-2 bg-maahi-brand/10 border border-maahi-brand/20 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
-                <p className="text-xs text-maahi-brand font-semibold flex items-center gap-2">
+              <div className="mt-2 px-3 py-2 bg-budget-brand/10 border border-budget-brand/20 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
+                <p className="text-xs text-budget-brand font-semibold flex items-center gap-2">
                   <span>✨</span>
                   <span>Great! Now select your Destination</span>
                 </p>
               </div>
             )}
-            </div>
           </div>
         </div>
       </div>
@@ -1201,7 +1540,7 @@ export default function Home() {
           <button
             onClick={handleConfirmPickupLocation}
             disabled={loadingAddress || !mapCenter}
-            className="w-full bg-maahi-brand text-white font-bold py-3 sm:py-4 md:py-5 rounded-2xl shadow-2xl flex items-center justify-center gap-2 hover:bg-maahi-brand/90 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed border-2 border-white/20 text-xs sm:text-sm md:text-base min-h-[44px] sm:min-h-[48px] md:min-h-[56px]"
+            className="w-full bg-budget-brand text-white font-bold py-3 sm:py-4 md:py-5 rounded-2xl shadow-2xl flex items-center justify-center gap-2 hover:bg-budget-brand/90 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed border-2 border-white/20 text-xs sm:text-sm md:text-base min-h-[44px] sm:min-h-[48px] md:min-h-[56px]"
           >
             {loadingAddress ? (
               <>
@@ -1273,6 +1612,10 @@ export default function Home() {
           setSelectedDate('');
           setSelectedTime('');
           setSelectedAmPm('AM');
+          setSelectedCabType('');
+          setSelectedTripType('');
+          setStartDate('');
+          setEndDate('');
         }}
       >
         <div className="space-y-6">
@@ -1288,6 +1631,10 @@ export default function Home() {
                 setSelectedDate('');
                 setSelectedTime('');
                 setSelectedAmPm('AM');
+                setSelectedCabType('');
+                setSelectedTripType('');
+                setStartDate('');
+                setEndDate('');
               }}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
@@ -1300,22 +1647,22 @@ export default function Home() {
             {/* Date Picker */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-maahi-brand" />
+                <Calendar className="w-4 h-4 text-budget-brand" />
                 Select Date
               </label>
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                min={getTomorrowDateString()}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-maahi-accent focus:outline-none transition-colors text-gray-800 font-medium"
+                min={getMinDateString()}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-budget-accent focus:outline-none transition-colors text-gray-800 font-medium"
               />
             </div>
 
             {/* Time Picker */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-maahi-brand" />
+                <Clock className="w-4 h-4 text-budget-brand" />
                 Select Time
               </label>
               <div className="flex items-center gap-3">
@@ -1335,7 +1682,7 @@ export default function Home() {
                     }
                   }}
                   min={getMinTime()}
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-maahi-accent focus:outline-none transition-colors text-gray-800 font-medium"
+                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-budget-accent focus:outline-none transition-colors text-gray-800 font-medium"
                 />
                 <div className="flex gap-2">
                   <button
@@ -1353,7 +1700,7 @@ export default function Home() {
                     }}
                     className={`px-6 py-3 rounded-xl font-semibold transition-all ${
                       selectedAmPm === 'AM'
-                        ? 'bg-maahi-brand text-white shadow-md'
+                        ? 'bg-budget-brand text-white shadow-md'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -1374,13 +1721,85 @@ export default function Home() {
                     }}
                     className={`px-6 py-3 rounded-xl font-semibold transition-all ${
                       selectedAmPm === 'PM'
-                        ? 'bg-maahi-brand text-white shadow-md'
+                        ? 'bg-budget-brand text-white shadow-md'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     PM
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Trip Type Selection */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                <Route className="w-4 h-4 text-budget-brand" />
+                Trip Type
+              </label>
+              <select
+                value={selectedTripType}
+                onChange={(e) => setSelectedTripType(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-budget-accent focus:outline-none transition-colors text-gray-800 font-medium bg-white appearance-none cursor-pointer"
+                required
+              >
+                <option value="">Select Trip Type</option>
+                <option value="Airport Transfer">Airport Transfer</option>
+                <option value="Local">Local</option>
+                <option value="Outstation">Outstation</option>
+                <option value="One Way">One Way</option>
+              </select>
+            </div>
+
+            {/* Cab Type Selection */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                <Car className="w-4 h-4 text-budget-brand" />
+                Cab Type
+              </label>
+              <select
+                value={selectedCabType}
+                onChange={(e) => setSelectedCabType(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-budget-accent focus:outline-none transition-colors text-gray-800 font-medium bg-white appearance-none cursor-pointer"
+                required
+              >
+                <option value="">Select Cab Type</option>
+                {vehicleTypes.map((vehicle) => (
+                  <option key={vehicle.name} value={vehicle.name}>
+                    {vehicle.name} {vehicle.multiplier !== 1.0 && `(${(vehicle.multiplier * 100).toFixed(0)}%)`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Start Date and End Date */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-budget-brand" />
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  min={getMinDateString()}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-budget-accent focus:outline-none transition-colors text-gray-800 font-medium"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-budget-brand" />
+                  End Date (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  min={startDate || getMinDateString()}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-budget-accent focus:outline-none transition-colors text-gray-800 font-medium"
+                />
               </div>
             </div>
           </div>
@@ -1403,12 +1822,30 @@ export default function Home() {
                   {distance && calculatedFare !== null && (() => {
                     const currentPricing = getCurrentPricing();
                     const timeSlotLabel = getTimeSlotLabel();
+                    const baseFare = (distance * currentPricing.per_km_rate) + currentPricing.base_fare;
+                    const vehicleMultiplier = selectedCabType && vehicleMultiplierMap[selectedCabType] 
+                      ? vehicleMultiplierMap[selectedCabType] 
+                      : 1.0;
+                    const vehicleAdjustedFare = baseFare * vehicleMultiplier;
+                    const nights = startDate && endDate ? calculateNights(startDate, endDate) : 0;
+                    const nightStayCharges = nights > 0 ? nights * nightStayRate : 0;
+                    
                     return (
                       <>
                         <p className="text-xs text-gray-500 mt-1">
                           Base: ₹{currentPricing.base_fare} + ₹{currentPricing.per_km_rate}/km
                         </p>
-                        <p className="text-xs text-maahi-brand font-semibold mt-1">
+                        {selectedCabType && vehicleMultiplier !== 1.0 && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Vehicle ({selectedCabType.split(' ')[0]}): {vehicleMultiplier}x ({(vehicleMultiplier * 100).toFixed(0)}%)
+                          </p>
+                        )}
+                        {nights > 0 && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Night Stay ({nights} night{nights > 1 ? 's' : ''} @ ₹{nightStayRate}/night): ₹{nightStayCharges}
+                          </p>
+                        )}
+                        <p className="text-xs text-budget-brand font-semibold mt-1">
                           {timeSlotLabel}
                         </p>
                       </>
@@ -1437,9 +1874,9 @@ export default function Home() {
 
           {/* Action Button */}
           <button
-            className="w-full bg-maahi-brand text-white py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-budget-brand text-white py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
             onClick={handleConfirmBooking}
-            disabled={bookingInProgress || loadingRoute || !distance || !selectedDate || !selectedTime || !isValidDateTime()}
+            disabled={bookingInProgress || loadingRoute || !distance || !selectedDate || !selectedTime || !isValidDateTime() || !selectedCabType || !selectedTripType || !startDate}
           >
             {bookingInProgress ? (
               <>
