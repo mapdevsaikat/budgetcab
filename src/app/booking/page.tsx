@@ -712,6 +712,22 @@ export default function Home() {
     }
   }, [selectedDate]);
 
+  // Update minimum time and validate selected time when date changes
+  useEffect(() => {
+    if (selectedDate && selectedTime) {
+      const minTime = getMinTimeString(selectedDate);
+      const [minHours, minMinutes] = minTime.split(':').map(Number);
+      const [selectedHours, selectedMinutes] = selectedTime.split(':').map(Number);
+      
+      // If selected time is before minimum time, update it to minimum time
+      if (selectedHours < minHours || (selectedHours === minHours && selectedMinutes < minMinutes)) {
+        setSelectedTime(minTime);
+        const [hours] = minTime.split(':');
+        setSelectedAmPm(parseInt(hours) >= 12 ? 'PM' : 'AM');
+      }
+    }
+  }, [selectedDate]);
+
   // Get minimum time based on selected date (2 hours from now if today, otherwise 00:00)
   const getMinTime = () => {
     if (!selectedDate) return '00:00';
@@ -723,15 +739,12 @@ export default function Home() {
     if (!selectedDate || !selectedTime) return false;
     
     try {
-      // Parse time and convert to 24-hour format
+      // selectedTime is already in 24-hour format from the time input
       const [hours, minutes] = selectedTime.split(':');
       if (!hours || !minutes) return false;
 
-      const hour24 = selectedAmPm === 'PM' && parseInt(hours) !== 12 
-        ? parseInt(hours) + 12 
-        : selectedAmPm === 'AM' && parseInt(hours) === 12 
-          ? 0 
-          : parseInt(hours);
+      const hour24 = parseInt(hours);
+      if (isNaN(hour24) || hour24 < 0 || hour24 > 23) return false;
 
       // Create date string in ISO format
       let dateString = selectedDate;
@@ -878,7 +891,7 @@ export default function Home() {
         return;
       }
 
-      // Parse time and convert to 24-hour format
+      // selectedTime is already in 24-hour format from the time input
       const [hours, minutes] = selectedTime.split(':');
       if (!hours || !minutes) {
         showNotification('error', 'Invalid Time', 'Please select a valid time');
@@ -886,11 +899,12 @@ export default function Home() {
         return;
       }
 
-      const hour24 = selectedAmPm === 'PM' && parseInt(hours) !== 12 
-        ? parseInt(hours) + 12 
-        : selectedAmPm === 'AM' && parseInt(hours) === 12 
-          ? 0 
-          : parseInt(hours);
+      const hour24 = parseInt(hours);
+      if (isNaN(hour24) || hour24 < 0 || hour24 > 23) {
+        showNotification('error', 'Invalid Time', 'Please select a valid time');
+        setBookingInProgress(false);
+        return;
+      }
 
       // Create date string in ISO format (YYYY-MM-DD)
       // Ensure startDate is in correct format
@@ -1688,12 +1702,15 @@ export default function Home() {
                     const newTime = e.target.value;
                     console.log('Time changed to:', newTime);
                     setSelectedTime(newTime);
-                    // Auto-adjust AM/PM based on selected time
-                    const [hours] = newTime.split(':').map(Number);
-                    if (hours >= 12) {
-                      setSelectedAmPm('PM');
-                    } else {
-                      setSelectedAmPm('AM');
+                    // Auto-adjust AM/PM based on selected time (24-hour format)
+                    if (newTime) {
+                      const [hours] = newTime.split(':').map(Number);
+                      // Sync AM/PM with the 24-hour time value
+                      if (hours >= 12) {
+                        setSelectedAmPm('PM');
+                      } else {
+                        setSelectedAmPm('AM');
+                      }
                     }
                   }}
                   min={getMinTime()}
@@ -1705,13 +1722,17 @@ export default function Home() {
                     onClick={() => {
                       if (selectedTime) {
                         const [hours, minutes] = selectedTime.split(':').map(Number);
-                        // Convert to AM: if hours >= 12, subtract 12 (but 12 becomes 0)
-                        const hour24 = hours >= 12 ? (hours === 12 ? 0 : hours - 12) : hours;
+                        // Convert current 24-hour time to AM equivalent (0-11 range)
+                        // Examples: 0->0, 1->1, 11->11, 12->0, 13->1, 23->11
+                        let hour24 = hours;
+                        if (hours >= 12) {
+                          hour24 = hours === 12 ? 0 : hours - 12;
+                        }
                         const newTime = `${String(hour24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-                        console.log('AM clicked, new time:', newTime);
+                        console.log('AM clicked, converting', hours, 'to', hour24, 'new time:', newTime);
                         setSelectedTime(newTime);
+                        setSelectedAmPm('AM');
                       }
-                      setSelectedAmPm('AM');
                     }}
                     className={`px-6 py-3 rounded-xl font-semibold transition-all ${
                       selectedAmPm === 'AM'
@@ -1726,13 +1747,17 @@ export default function Home() {
                     onClick={() => {
                       if (selectedTime) {
                         const [hours, minutes] = selectedTime.split(':').map(Number);
-                        // Convert to PM: if hours < 12, add 12 (but 12 stays as 12)
-                        const hour24 = hours < 12 ? hours + 12 : hours;
+                        // Convert current 24-hour time to PM equivalent (12-23 range)
+                        // Examples: 0->12, 1->13, 11->23, 12->12, 13->13, 23->23
+                        let hour24 = hours;
+                        if (hours < 12) {
+                          hour24 = hours === 0 ? 12 : hours + 12;
+                        }
                         const newTime = `${String(hour24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-                        console.log('PM clicked, new time:', newTime);
+                        console.log('PM clicked, converting', hours, 'to', hour24, 'new time:', newTime);
                         setSelectedTime(newTime);
+                        setSelectedAmPm('PM');
                       }
-                      setSelectedAmPm('PM');
                     }}
                     className={`px-6 py-3 rounded-xl font-semibold transition-all ${
                       selectedAmPm === 'PM'
