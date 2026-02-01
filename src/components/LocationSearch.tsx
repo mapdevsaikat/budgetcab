@@ -60,7 +60,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
             return true; // Already processed, skip
         }
         
-        // Check if it matches DigiPin format (e.g., "4P3-JF2-JP44" or other regional formats)
+        // Check if it matches DigiPin format (e.g., "2P7-C93-PMP9" or other regional formats)
         const isValidDigiPin = /^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(trimmedQuery);
         
         if (isValidDigiPin) {
@@ -113,7 +113,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
 
     // Fetch autocomplete suggestions - matching SearchPanel.tsx reference pattern
     const fetchAutocompleteSuggestions = useCallback(async (searchQuery: string) => {
-        // Skip autocomplete for DigiPin format (e.g., "2P7-C93-PMP9" or "4P3-JF2-JP44")
+        // Skip autocomplete for DigiPin format (e.g., "2P7-C93-PMP9")
         const isDigiPin = /^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(searchQuery.trim());
         if (isDigiPin) {
             setResults([]);
@@ -166,14 +166,12 @@ const LocationSearch: React.FC<LocationSearchProps> = ({ placeholder, onSelect, 
         // Check if user is typing a DigiPin (various regional formats supported)
         if (/^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(trimmedQuery)) {
             // If it's a complete DigiPin format, try to convert it
-            if (/^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/i.test(trimmedQuery)) {
-                const handled = handleDigiPinSearch(trimmedQuery);
-                if (handled) {
-                    return; // DigiPin was successfully handled, don't call API
-                }
+            const handled = handleDigiPinSearch(trimmedQuery);
+            if (handled) {
+                return; // DigiPin was successfully handled, don't call API
             }
-            // If it starts with 4P but not complete format yet, don't call API
-            // User might still be typing - wait for complete DigiPin format
+            // If DigiPin format detected but conversion failed, don't call API
+            // User might still be typing or DigiPin might be invalid
             setResults([]);
             setShowSuggestions(false);
             setLoading(false);

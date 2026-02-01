@@ -4,43 +4,6 @@ export function generateBookingRef(): string {
 }
 
 /**
- * Time slot types for pricing
- */
-export type TimeSlotType = 'office_hours' | 'night_hours' | 'regular_time';
-
-/**
- * Determines the time slot type based on IST (India Standard Time)
- * Office Hours: 8:00 AM - 11:00 AM and 5:00 PM - 9:00 PM
- * Night Hours: 11:00 PM - 5:00 AM
- * Regular Time: All other times
- */
-export function getTimeSlotType(dateTime: Date): TimeSlotType {
-    // Convert to IST (UTC+5:30) by adding the offset manually
-    // IST is UTC+5:30, so we add 5 hours and 30 minutes
-    const utcTime = dateTime.getTime();
-    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
-    const istTime = new Date(utcTime + istOffset);
-    
-    // Get hours and minutes in IST
-    const hours = istTime.getUTCHours(); // Use UTC methods since we've already adjusted the time
-    const minutes = istTime.getUTCMinutes();
-    const totalMinutes = hours * 60 + minutes;
-
-    // Office Hours: 8:00 AM - 11:00 AM (480-660 minutes) and 5:00 PM - 9:00 PM (1020-1320 minutes)
-    if ((totalMinutes >= 480 && totalMinutes < 660) || (totalMinutes >= 1020 && totalMinutes < 1320)) {
-        return 'office_hours';
-    }
-
-    // Night Hours: 11:00 PM - 5:00 AM (1320-1440 minutes or 0-300 minutes)
-    if (totalMinutes >= 1320 || totalMinutes < 300) {
-        return 'night_hours';
-    }
-
-    // Regular Time: All other times
-    return 'regular_time';
-}
-
-/**
  * Calculate number of nights between start and end date
  */
 export function calculateNights(startDate: string, endDate: string | null): number {
@@ -60,38 +23,22 @@ export function calculateNights(startDate: string, endDate: string | null): numb
 }
 
 /**
- * Calculate fare based on distance, time slot, vehicle type multiplier, and duration
- * @param distanceKm - Distance in kilometers
- * @param baseFare - Base fare amount
- * @param perKmRate - Rate per kilometer
- * @param timeSlot - Time slot type (optional, for future use)
- * @param vehicleMultiplier - Vehicle type multiplier from database (default: 1.0)
- * @param startDate - Start date for trip
- * @param endDate - End date for trip (optional)
+ * Simplified fare calculation based on cab type + trip type pricing
+ * @param baseFare - Base fare amount for the cab type + trip type combination
+ * @param numberOfNights - Number of nights (only for Outstation trips)
  * @param nightStayRate - Night stay rate per night (default: 500)
  */
 export function calculateFare(
-    distanceKm: number, 
-    baseFare: number, 
-    perKmRate: number, 
-    timeSlot?: TimeSlotType,
-    vehicleMultiplier: number = 1.0,
-    startDate?: string,
-    endDate?: string | null,
+    baseFare: number,
+    numberOfNights: number = 0,
     nightStayRate: number = 500 // Default night stay rate per night
 ): number {
-    // Base fare calculation
-    let fare = (distanceKm * perKmRate) + baseFare;
+    // Base fare for cab type + trip type combination
+    let fare = baseFare;
     
-    // Apply vehicle type multiplier (from database)
-    fare = fare * vehicleMultiplier;
-    
-    // Add night stay charges if start_date and end_date are different
-    if (startDate && endDate) {
-        const nights = calculateNights(startDate, endDate);
-        if (nights > 0) {
-            fare += nights * nightStayRate;
-        }
+    // Add night stay charges for Outstation trips
+    if (numberOfNights > 0) {
+        fare += numberOfNights * nightStayRate;
     }
     
     return parseFloat(fare.toFixed(2));

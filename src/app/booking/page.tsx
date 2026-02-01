@@ -14,7 +14,7 @@ import { useBookingStore } from '@/store/useBookingStore';
 import { Calendar, Clock, ArrowRight, LogOut, User as UserIcon, Navigation, ChevronDown, X, Edit2, Home as HomeIcon, Briefcase, Car, Route } from 'lucide-react';
 import { User } from '@supabase/supabase-js';
 import L from 'leaflet';
-import { generateBookingRef, calculateFare, getTimeSlotType, TimeSlotType, calculateNights } from '@/lib/booking';
+import { generateBookingRef, calculateFare, calculateNights } from '@/lib/booking';
 
 // Feature flag: Show pricing to users (set to false to hide pricing)
 const SHOW_PRICING_TO_USERS = false;
@@ -29,17 +29,17 @@ const getTodayDateString = (): string => {
   return `${year}-${month}-${day}`;
 };
 
-// Helper function to get minimum allowed date (today if 2+ hours remain, otherwise tomorrow)
+// Helper function to get minimum allowed date (today if 3+ hours remain, otherwise tomorrow)
 const getMinDateString = (): string => {
   const now = new Date();
   
-  // Check if there are at least 2 hours remaining today
-  const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  // Check if there are at least 3 hours remaining today
+  const threeHoursFromNow = new Date(now.getTime() + 3 * 60 * 60 * 1000);
   const endOfToday = new Date(now);
   endOfToday.setHours(23, 59, 59, 999);
   
-  // If 2 hours from now is still today, allow today; otherwise require tomorrow
-  if (twoHoursFromNow <= endOfToday) {
+  // If 3 hours from now is still today, allow today; otherwise require tomorrow
+  if (threeHoursFromNow <= endOfToday) {
     return getTodayDateString();
   } else {
     const tomorrow = new Date(now);
@@ -51,16 +51,16 @@ const getMinDateString = (): string => {
   }
 };
 
-// Helper function to get minimum allowed time (2 hours from now in local timezone)
+// Helper function to get minimum allowed time (3 hours from now in local timezone)
 const getMinTimeString = (selectedDate: string): string => {
   const now = new Date();
   const todayString = getTodayDateString();
-  const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  const threeHoursFromNow = new Date(now.getTime() + 3 * 60 * 60 * 1000);
   
-  // If selected date is today, return 2 hours from now
+  // If selected date is today, return 3 hours from now
   if (selectedDate === todayString) {
-    const hours = String(twoHoursFromNow.getHours()).padStart(2, '0');
-    const minutes = String(twoHoursFromNow.getMinutes()).padStart(2, '0');
+    const hours = String(threeHoursFromNow.getHours()).padStart(2, '0');
+    const minutes = String(threeHoursFromNow.getMinutes()).padStart(2, '0');
     return `${hours}:${minutes}`;
   }
   
@@ -133,18 +133,8 @@ export default function Home() {
   // Booking State
   const [distance, setDistance] = useState<number | null>(null);
   const [routeGeometry, setRouteGeometry] = useState<any>(null);
-  const [pricingRules, setPricingRules] = useState<{
-    office_hours: { base_fare: number; per_km_rate: number } | null;
-    night_hours: { base_fare: number; per_km_rate: number } | null;
-    regular_time: { base_fare: number; per_km_rate: number } | null;
-  }>({
-    office_hours: null,
-    night_hours: null,
-    regular_time: null,
-  });
-  const [nightStayRate, setNightStayRate] = useState<number>(500); // Default fallback
+  const [nightStayRate] = useState<number>(500); // Fixed at 500 per night
   const [calculatedFare, setCalculatedFare] = useState<number | null>(null);
-  const [currentTimeSlot, setCurrentTimeSlot] = useState<TimeSlotType>('regular_time');
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -158,8 +148,16 @@ export default function Home() {
   const [endDate, setEndDate] = useState<string>('');
   
   // Vehicle types state (from database)
-  const [vehicleTypes, setVehicleTypes] = useState<Array<{ name: string; multiplier: number; display_order: number }>>([]);
-  const [vehicleMultiplierMap, setVehicleMultiplierMap] = useState<Record<string, number>>({});
+  const [vehicleTypes, setVehicleTypes] = useState<Array<{ 
+    name: string; 
+    display_order: number 
+  }>>([]);
+  
+  // Pricing map: key is "cab_type|trip_type", value is base_fare
+  const [pricingMap, setPricingMap] = useState<Record<string, number>>({});
+  
+  // Number of nights for Outstation trips
+  const [numberOfNights, setNumberOfNights] = useState<number>(0);
 
   // Notification Modal State
   const [notification, setNotification] = useState<{
@@ -199,9 +197,9 @@ export default function Home() {
       }
     });
 
-    // Fetch pricing rules and vehicle types
-    fetchPricingRules();
+    // Fetch vehicle types and pricing
     fetchVehicleTypes();
+    fetchPricing();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -250,160 +248,47 @@ export default function Home() {
     }
   }, [pickup, drop, pickupLocked]);
 
-  // Helper function to find matching pricing rule from database based on time
-  const findPricingRuleForTime = (hours: number, minutes: number) => {
-    const pricingData = (window as any).pricingRulesData;
-    if (!pricingData || !Array.isArray(pricingData)) {
-      return null;
-    }
-
-    const currentTimeInMinutes = hours * 60 + minutes;
-
-    // Sort by priority (highest first) and check each rule
-    const sortedRules = [...pricingData].sort((a, b) => (b.priority || 0) - (a.priority || 0));
-
-    for (const rule of sortedRules) {
-      if (!rule.start_time || !rule.end_time) continue;
-
-      const [startHours, startMinutes] = rule.start_time.split(':').map(Number);
-      const [endHours, endMinutes] = rule.end_time.split(':').map(Number);
-      
-      const startTimeInMinutes = startHours * 60 + startMinutes;
-      const endTimeInMinutes = endHours * 60 + endMinutes;
-
-      // Check if time falls within range
-      let isInRange = false;
-      
-      if (startTimeInMinutes <= endTimeInMinutes) {
-        // Normal range (e.g., 8:00 to 11:00)
-        isInRange = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes;
-      } else {
-        // Overnight range (e.g., 23:00 to 05:00)
-        isInRange = currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes < endTimeInMinutes;
-      }
-
-      if (isInRange) {
-        return rule;
-      }
-    }
-
-    return null;
-  };
-
-  // Recalculate fare when time, date, distance, pricing rules, cab type, or dates change
+  // Simplified fare calculation based on cab type + trip type pricing
   useEffect(() => {
     console.log('🔄 Fare recalculation triggered:', {
-      selectedDate,
-      selectedTime,
-      selectedAmPm,
-      distance,
       selectedCabType,
-      startDate,
-      endDate,
-      hasPricingRules: !!pricingRules.regular_time
+      selectedTripType,
+      numberOfNights,
     });
 
-    if (!distance || !pricingRules.regular_time) {
-      console.log('⚠️ Missing distance or pricing rules');
+    // Don't calculate if cab type or trip type is not selected yet
+    if (!selectedCabType || !selectedTripType) {
+      console.log('⚠️ Cab type or trip type not selected');
       setCalculatedFare(null);
       return;
     }
 
-    // Don't calculate if cab type is not selected yet
-    if (!selectedCabType) {
-      console.log('⚠️ Cab type not selected');
+    // Get pricing for cab_type + trip_type combination
+    const pricingKey = `${selectedCabType}|${selectedTripType}`;
+    const baseFare = pricingMap[pricingKey];
+    
+    if (!baseFare || baseFare === 0) {
+      console.log('⚠️ Pricing not found for:', pricingKey);
+      console.log('Available pricing keys:', Object.keys(pricingMap));
       setCalculatedFare(null);
       return;
     }
 
     try {
-      // Determine time slot from database
-      let matchedRule = null;
-      let timeSlot: TimeSlotType = 'regular_time';
+      console.log('💰 Base fare for', pricingKey, ':', baseFare);
+      console.log('🌙 Number of nights:', numberOfNights);
       
-      if (selectedDate && selectedTime) {
-        // selectedTime is already kept in 24-hour format by our handlers
-        const [hours, minutes] = selectedTime.split(':').map(Number);
-        const hour24 = hours % 24; // Ensure it's within 0-23 range
-        
-        // Find matching rule from database
-        matchedRule = findPricingRuleForTime(hour24, minutes);
-        
-        if (matchedRule) {
-          timeSlot = matchedRule.time_slot_type as TimeSlotType;
-          console.log('⏰ Time slot determined from DB:', timeSlot, 'for time:', `${String(hour24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
-          console.log('📋 Matched rule:', matchedRule);
-        } else {
-          console.log('⚠️ No matching rule found, using regular_time');
-        }
-      }
-
-      setCurrentTimeSlot(timeSlot);
-      
-      // Get pricing from matched rule or fallback
-      let currentPricing;
-      let ruleNightStayRate = nightStayRate; // Default to global night stay rate
-      
-      if (matchedRule) {
-        currentPricing = {
-          base_fare: matchedRule.base_fare,
-          per_km_rate: matchedRule.per_km_rate
-        };
-        // Use night_stay_rate from matched rule if available, otherwise use global
-        if (matchedRule.night_stay_rate != null) {
-          ruleNightStayRate = matchedRule.night_stay_rate;
-        }
-      } else {
-        currentPricing = pricingRules[timeSlot] || pricingRules.regular_time || { base_fare: 50, per_km_rate: 15 };
-      }
-      
-      // Get vehicle multiplier from database
-      const vehicleMultiplier = selectedCabType && vehicleMultiplierMap[selectedCabType] 
-        ? vehicleMultiplierMap[selectedCabType] 
-        : 1.0;
-      
-      console.log('💰 Pricing for', timeSlot, ':', currentPricing);
-      console.log('🚗 Cab type:', selectedCabType, 'Multiplier:', vehicleMultiplier);
-      console.log('📅 Start date:', startDate, 'End date:', endDate);
-      console.log('🌙 Night stay rate:', ruleNightStayRate);
-      
-      // Calculate fare with vehicle type and night stay
-      const fare = calculateFare(
-        distance, 
-        currentPricing.base_fare, 
-        currentPricing.per_km_rate, 
-        timeSlot,
-        vehicleMultiplier, // Pass multiplier value instead of cabType string
-        startDate || selectedDate,
-        endDate,
-        ruleNightStayRate // Use rule-specific or global night stay rate
-      );
+      // Calculate fare: base_fare + (nights × 500) for Outstation trips
+      const nights = selectedTripType === 'Outstation' ? numberOfNights : 0;
+      const fare = calculateFare(baseFare, nights, nightStayRate);
       
       console.log('✅ Calculated fare:', fare);
       setCalculatedFare(fare);
     } catch (error) {
       console.error('❌ Error recalculating fare:', error);
-      // Fallback to regular time pricing
-      const fallbackPricing = pricingRules.regular_time || { base_fare: 50, per_km_rate: 15 };
-      // Get vehicle multiplier from database
-      const vehicleMultiplier = selectedCabType && vehicleMultiplierMap[selectedCabType] 
-        ? vehicleMultiplierMap[selectedCabType] 
-        : 1.0;
-      
-      const fare = calculateFare(
-        distance, 
-        fallbackPricing.base_fare, 
-        fallbackPricing.per_km_rate, 
-        'regular_time',
-        vehicleMultiplier,
-        startDate || selectedDate,
-        endDate,
-        nightStayRate
-      );
-      setCalculatedFare(fare);
-      setCurrentTimeSlot('regular_time');
+      setCalculatedFare(null);
     }
-  }, [selectedDate, selectedTime, selectedAmPm, distance, pricingRules, selectedCabType, startDate, endDate, nightStayRate, vehicleMultiplierMap]);
+  }, [selectedCabType, selectedTripType, numberOfNights, pricingMap, nightStayRate]);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
@@ -463,163 +348,95 @@ export default function Home() {
   };
 
   const fetchVehicleTypes = async () => {
+    const fallbackVehicles = [
+      { name: 'Maruti Swift Dzire Or Similar CNG', display_order: 1 },
+      { name: 'Maruti Swift Dzire Or Similar Diesel', display_order: 2 },
+      { name: 'Maruti Ertiga Or Similar', display_order: 3 },
+      { name: 'Toyota Innova | Mahindra Marazzo', display_order: 4 },
+      { name: 'Toyota Innova Crysta', display_order: 5 },
+      { name: 'Tempo Traveller 17 Seater', display_order: 6 },
+      { name: 'Tempo Traveller 26 Seater', display_order: 7 },
+    ];
+
     try {
       const { data, error } = await supabase
         .from('vehicle_types')
-        .select('name, multiplier, display_order')
+        .select('name, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
       
       if (error) {
         console.error('Error fetching vehicle types:', error);
-        // Use fallback defaults if fetch fails
-        const fallbackVehicles = [
-          { name: 'Maruti Swift Dzire Or Similar CNG', multiplier: 1.0, display_order: 1 },
-          { name: 'Maruti Swift Dzire Or Similar Diesel', multiplier: 1.1, display_order: 2 },
-          { name: 'Maruti Ertiga Or Similar', multiplier: 1.3, display_order: 3 },
-          { name: 'Toyota Innova | Mahindra Marazzo', multiplier: 1.5, display_order: 4 },
-          { name: 'Toyota Innova Crysta', multiplier: 1.6, display_order: 5 },
-          { name: 'Tempo Traveller 17 Seater', multiplier: 2.0, display_order: 6 },
-          { name: 'Tempo Traveller 26 Seater', multiplier: 2.5, display_order: 7 },
-        ];
         setVehicleTypes(fallbackVehicles);
-        const fallbackMap: Record<string, number> = {};
-        fallbackVehicles.forEach(v => { fallbackMap[v.name] = v.multiplier; });
-        setVehicleMultiplierMap(fallbackMap);
         return;
       }
 
       if (data && data.length > 0) {
         setVehicleTypes(data);
-        // Create a map for quick lookup
-        const multiplierMap: Record<string, number> = {};
-        data.forEach((vehicle: any) => {
-          multiplierMap[vehicle.name] = vehicle.multiplier;
-        });
-        setVehicleMultiplierMap(multiplierMap);
         console.log('Vehicle types loaded from database:', data);
       } else {
         console.warn('No vehicle types found in database. Using defaults.');
-        // Use fallback defaults
-        const fallbackVehicles = [
-          { name: 'Maruti Swift Dzire Or Similar CNG', multiplier: 1.0, display_order: 1 },
-          { name: 'Maruti Swift Dzire Or Similar Diesel', multiplier: 1.1, display_order: 2 },
-          { name: 'Maruti Ertiga Or Similar', multiplier: 1.3, display_order: 3 },
-          { name: 'Toyota Innova | Mahindra Marazzo', multiplier: 1.5, display_order: 4 },
-          { name: 'Toyota Innova Crysta', multiplier: 1.6, display_order: 5 },
-          { name: 'Tempo Traveller 17 Seater', multiplier: 2.0, display_order: 6 },
-          { name: 'Tempo Traveller 26 Seater', multiplier: 2.5, display_order: 7 },
-        ];
         setVehicleTypes(fallbackVehicles);
-        const fallbackMap: Record<string, number> = {};
-        fallbackVehicles.forEach(v => { fallbackMap[v.name] = v.multiplier; });
-        setVehicleMultiplierMap(fallbackMap);
       }
     } catch (error) {
       console.error('Failed to fetch vehicle types:', error);
-      // Use fallback defaults
-      const fallbackVehicles = [
-        { name: 'Maruti Swift Dzire Or Similar CNG', multiplier: 1.0, display_order: 1 },
-        { name: 'Maruti Swift Dzire Or Similar Diesel', multiplier: 1.1, display_order: 2 },
-        { name: 'Maruti Ertiga Or Similar', multiplier: 1.3, display_order: 3 },
-        { name: 'Toyota Innova | Mahindra Marazzo', multiplier: 1.5, display_order: 4 },
-        { name: 'Toyota Innova Crysta', multiplier: 1.6, display_order: 5 },
-        { name: 'Tempo Traveller 17 Seater', multiplier: 2.0, display_order: 6 },
-        { name: 'Tempo Traveller 26 Seater', multiplier: 2.5, display_order: 7 },
-      ];
       setVehicleTypes(fallbackVehicles);
-      const fallbackMap: Record<string, number> = {};
-      fallbackVehicles.forEach(v => { fallbackMap[v.name] = v.multiplier; });
-      setVehicleMultiplierMap(fallbackMap);
     }
   };
 
-  const fetchPricingRules = async () => {
+  const fetchPricing = async () => {
     try {
+      console.log('🔄 Fetching pricing from database...');
+      
+      // Fetch pricing from pricing table: cab_type + trip_type -> base_fare
       const { data, error } = await supabase
-        .from('pricing_rules')
-        .select('id, base_fare, per_km_rate, time_slot_type, start_time, end_time, priority, night_stay_rate')
-        .order('priority', { ascending: false });
+        .from('pricing')
+        .select('cab_type, trip_type, base_fare')
+        .order('cab_type', { ascending: true });
       
       if (error) {
-        console.error('Error fetching pricing rules:', error);
+        console.error('❌ Error fetching pricing from database:', error);
         console.error('Error details:', {
           message: error.message,
           details: error.details,
           hint: error.hint,
           code: error.code
         });
-        // Use defaults if fetch fails
-        console.warn('Using default pricing: ₹50 base + ₹15/km');
-        setPricingRules({
-          office_hours: { base_fare: 60, per_km_rate: 18 },
-          night_hours: { base_fare: 70, per_km_rate: 20 },
-          regular_time: { base_fare: 50, per_km_rate: 15 },
-        });
+        
+        // Show user-friendly error but don't break the app
+        console.warn('⚠️ Using fallback pricing. Please check your pricing table in Supabase.');
+        
+        // Minimal fallback - empty map, will show error when user tries to book
+        setPricingMap({});
         return;
       }
 
       if (data && data.length > 0) {
-        // Store all rules for time-based lookup
-        (window as any).pricingRulesData = data;
-        
-        // Extract night stay rate from first rule that has it, or use default
-        const nightStayRateFromDB = data.find((rule: any) => rule.night_stay_rate != null)?.night_stay_rate || 500;
-        setNightStayRate(nightStayRateFromDB);
-        
-        // Also keep simplified rules for fallback
-        const rules: {
-          office_hours: { base_fare: number; per_km_rate: number } | null;
-          night_hours: { base_fare: number; per_km_rate: number } | null;
-          regular_time: { base_fare: number; per_km_rate: number } | null;
-        } = {
-          office_hours: null,
-          night_hours: null,
-          regular_time: null,
-        };
-
-        data.forEach((rule: any) => {
-          const slotType = rule.time_slot_type || 'regular_time';
-          if (slotType in rules && !rules[slotType as TimeSlotType]) {
-            rules[slotType as TimeSlotType] = {
-              base_fare: rule.base_fare,
-              per_km_rate: rule.per_km_rate,
-            };
+        const pricing: Record<string, number> = {};
+        data.forEach((item: any) => {
+          if (item.cab_type && item.trip_type && item.base_fare) {
+            const key = `${item.cab_type}|${item.trip_type}`;
+            pricing[key] = item.base_fare;
           }
         });
-
-        // Fill in defaults for missing time slots
-        if (!rules.office_hours) {
-          rules.office_hours = { base_fare: 60, per_km_rate: 18 };
-        }
-        if (!rules.night_hours) {
-          rules.night_hours = { base_fare: 70, per_km_rate: 20 };
-        }
-        if (!rules.regular_time) {
-          rules.regular_time = { base_fare: 50, per_km_rate: 15 };
-        }
-
-        setPricingRules(rules);
-        console.log('Pricing rules loaded from database:', data);
-      } else {
-        console.warn('No pricing rules found in database. Using defaults.');
-        setPricingRules({
-          office_hours: { base_fare: 60, per_km_rate: 18 },
-          night_hours: { base_fare: 70, per_km_rate: 20 },
-          regular_time: { base_fare: 50, per_km_rate: 15 },
+        
+        setPricingMap(pricing);
+        console.log('✅ Pricing loaded from database:', {
+          count: Object.keys(pricing).length,
+          sample: Object.keys(pricing).slice(0, 3)
         });
+        console.log('📋 Full pricing map:', pricing);
+      } else {
+        console.warn('⚠️ No pricing records found in database.');
+        console.warn('Please add pricing records to the pricing table with columns: cab_type, trip_type, base_fare');
+        setPricingMap({});
       }
     } catch (error) {
-      console.error('Failed to fetch pricing rules:', error);
-      // Use defaults
-      console.warn('Using default pricing.');
-      setPricingRules({
-        office_hours: { base_fare: 60, per_km_rate: 18 },
-        night_hours: { base_fare: 70, per_km_rate: 20 },
-        regular_time: { base_fare: 50, per_km_rate: 15 },
-      });
+      console.error('❌ Failed to fetch pricing:', error);
+      setPricingMap({});
     }
   };
+
 
   // Helper function to show notifications
   const showNotification = (
@@ -666,7 +483,6 @@ export default function Home() {
       // Fare will be recalculated by useEffect when distance changes
       console.log('Route calculated:', {
         distance: data.distance,
-        timeSlot: getTimeSlotLabel(),
       });
     } catch (error) {
       console.error('Error calculating route:', error);
@@ -688,12 +504,12 @@ export default function Home() {
     }
   };
 
-  // Initialize date to tomorrow when booking sheet opens (bookings must be made a day before)
+  // Initialize date and time when booking sheet opens (minimum 3 hours in advance)
   useEffect(() => {
     if (isBookingSheetOpen && !selectedDate) {
       const minDate = getMinDateString();
       setSelectedDate(minDate);
-      // Set default time based on minimum allowed time
+      // Set default time to 3 hours from now (minimum booking window)
       const minTime = getMinTimeString(minDate);
       setSelectedTime(minTime);
       const [hours] = minTime.split(':');
@@ -728,25 +544,23 @@ export default function Home() {
     }
   }, [selectedDate]);
 
-  // Get minimum time based on selected date (2 hours from now if today, otherwise 00:00)
+  // Get minimum time based on selected date (3 hours from now if today, otherwise 00:00)
   const getMinTime = () => {
     if (!selectedDate) return '00:00';
     return getMinTimeString(selectedDate);
   };
 
-  // Validate if selected datetime is at least 2 hours in the future (local timezone, IST for Indian users)
-  const isValidDateTime = () => {
+  // Check if selected datetime is at least 3 hours in the future
+  const isTimeAtLeast3HoursAway = (): boolean => {
     if (!selectedDate || !selectedTime) return false;
     
     try {
-      // selectedTime is already in 24-hour format from the time input
       const [hours, minutes] = selectedTime.split(':');
       if (!hours || !minutes) return false;
 
       const hour24 = parseInt(hours);
       if (isNaN(hour24) || hour24 < 0 || hour24 > 23) return false;
 
-      // Create date string in ISO format
       let dateString = selectedDate;
       if (!dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
         const parsedDate = new Date(dateString);
@@ -757,80 +571,23 @@ export default function Home() {
       const dateTimeString = `${dateString}T${String(hour24).padStart(2, '0')}:${minutes}:00`;
       const selectedDateTime = new Date(dateTimeString);
       
-      // Validate date is valid
       if (isNaN(selectedDateTime.getTime())) return false;
       
-      // Check if at least 2 hours in the future (local timezone, IST for Indian users)
       const now = new Date();
-      const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+      const threeHoursFromNow = new Date(now.getTime() + 3 * 60 * 60 * 1000);
       
-      return selectedDateTime >= twoHoursFromNow;
+      return selectedDateTime >= threeHoursFromNow;
     } catch (error) {
-      console.error('Error validating datetime:', error);
+      console.error('Error checking time:', error);
       return false;
     }
   };
 
-  // Helper function to get current time slot using database time ranges
-  const getCurrentTimeSlot = (): TimeSlotType => {
-    if (!selectedDate || !selectedTime) {
-      return 'regular_time';
-    }
-
-    try {
-      // Convert selected date/time to hours and minutes
-      const [hours, minutes] = selectedTime.split(':').map(Number);
-      const hour24 = hours % 24;
-      
-      // Find matching rule from database
-      const matchedRule = findPricingRuleForTime(hour24, minutes);
-      
-      if (matchedRule && matchedRule.time_slot_type) {
-        return matchedRule.time_slot_type as TimeSlotType;
-      }
-      
-      return 'regular_time';
-    } catch (error) {
-      console.error('Error getting current time slot:', error);
-      return 'regular_time';
-    }
+  // Validate if selected datetime is at least 3 hours in the future (local timezone, IST for Indian users)
+  const isValidDateTime = () => {
+    return isTimeAtLeast3HoursAway();
   };
 
-  // Helper function to get pricing based on selected date/time using database
-  const getCurrentPricing = () => {
-    if (!selectedDate || !selectedTime) {
-      return pricingRules.regular_time || { base_fare: 50, per_km_rate: 15 };
-    }
-
-    try {
-      const [hours, minutes] = selectedTime.split(':').map(Number);
-      const hour24 = hours % 24;
-      
-      const matchedRule = findPricingRuleForTime(hour24, minutes);
-      
-      if (matchedRule) {
-        return {
-          base_fare: matchedRule.base_fare,
-          per_km_rate: matchedRule.per_km_rate
-        };
-      }
-    } catch (error) {
-      console.error('Error getting current pricing:', error);
-    }
-
-    const timeSlotType = getCurrentTimeSlot();
-    return pricingRules[timeSlotType] || pricingRules.regular_time || { base_fare: 50, per_km_rate: 15 };
-  };
-
-  // Helper function to get time slot label
-  const getTimeSlotLabel = (): string => {
-    const labels: Record<TimeSlotType, string> = {
-      office_hours: 'Office Hours',
-      night_hours: 'Night Hours',
-      regular_time: 'Regular Time',
-    };
-    return labels[currentTimeSlot];
-  };
 
   const formatDateTimeDisplay = () => {
     if (!selectedDate || !selectedTime) return '';
@@ -874,6 +631,14 @@ export default function Home() {
 
     if (!selectedCabType || !selectedTripType || !startDate) {
       showNotification('error', 'Missing Information', 'Please select cab type, trip type, and start date');
+      setBookingInProgress(false);
+      return;
+    }
+
+    // Validate nights for Outstation trips
+    if (selectedTripType === 'Outstation' && (!numberOfNights || numberOfNights <= 0)) {
+      showNotification('error', 'Missing Information', 'Please specify number of nights for Outstation trips');
+      setBookingInProgress(false);
       return;
     }
 
@@ -932,37 +697,35 @@ export default function Home() {
         return;
       }
       
-      // Validate that scheduled time is at least 2 hours in the future (local timezone, IST for Indian users)
+      // Validate that scheduled time is at least 3 hours in the future (local timezone, IST for Indian users)
       const now = new Date();
-      const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+      const threeHoursFromNow = new Date(now.getTime() + 3 * 60 * 60 * 1000);
       
-      if (scheduledTime < twoHoursFromNow) {
-        showNotification('error', 'Invalid Time', 'Bookings must be made at least 2 hours in advance. Please select a later time.');
+      if (scheduledTime < threeHoursFromNow) {
+        showNotification('error', 'Invalid Time', 'Bookings must be made at least 3 hours in advance. Please select a later time.');
         setBookingInProgress(false);
         return;
       }
 
-      // Use the already calculated fare (which is based on selected time, cab type, and dates)
+      // Use the already calculated fare (which is based on cab type + trip type)
       const totalPrice = calculatedFare || (() => {
         // Fallback calculation if calculatedFare is null
-        const timeSlotType = getTimeSlotType(scheduledTime);
-        const currentPricing = pricingRules[timeSlotType] || pricingRules.regular_time || { base_fare: 50, per_km_rate: 15 };
-        // Get vehicle multiplier from database
-        const vehicleMultiplier = selectedCabType && vehicleMultiplierMap[selectedCabType] 
-          ? vehicleMultiplierMap[selectedCabType] 
-          : 1.0;
+        const pricingKey = `${selectedCabType}|${selectedTripType}`;
+        const baseFare = pricingMap[pricingKey];
         
-        return calculateFare(
-          distance, 
-          currentPricing.base_fare, 
-          currentPricing.per_km_rate, 
-          timeSlotType,
-          vehicleMultiplier,
-          startDate || selectedDate,
-          endDate,
-          nightStayRate
-        );
+        if (!baseFare || baseFare === 0) {
+          showNotification('error', 'Pricing Not Found', `Pricing not configured for ${selectedCabType} - ${selectedTripType}. Please contact support.`, 'The pricing table may need to be updated in the database.');
+          setBookingInProgress(false);
+          return 0;
+        }
+        
+        const nights = selectedTripType === 'Outstation' ? numberOfNights : 0;
+        return calculateFare(baseFare, nights, nightStayRate);
       })();
+      
+      if (totalPrice === 0) {
+        return; // Error already shown
+      }
 
       // Create booking record
       const { data, error } = await supabase
@@ -994,20 +757,50 @@ export default function Home() {
 
       if (data) {
         // Create booking options record
-        const { error: optionsError } = await supabase
+        const bookingOptionsData: any = {
+          booking_id: data.id,
+          cab_type: selectedCabType,
+          trip_type: selectedTripType,
+          start_date: startDate,
+        };
+        
+        // Only add end_date if it exists
+        if (endDate) {
+          bookingOptionsData.end_date = endDate;
+        }
+        
+        // Only add number_of_nights for Outstation trips
+        if (selectedTripType === 'Outstation' && numberOfNights > 0) {
+          bookingOptionsData.number_of_nights = numberOfNights;
+        }
+        
+        console.log('📝 Creating booking options with data:', bookingOptionsData);
+        
+        const { error: optionsError, data: optionsData } = await supabase
           .from('booking_options')
-          .insert({
-            booking_id: data.id,
-            cab_type: selectedCabType,
-            trip_type: selectedTripType,
-            start_date: startDate,
-            end_date: endDate || null,
-          });
+          .insert(bookingOptionsData)
+          .select();
 
         if (optionsError) {
-          console.error('Error creating booking options:', optionsError);
+          console.error('❌ Error creating booking options:', optionsError);
+          console.error('Error details:', {
+            message: optionsError.message,
+            details: optionsError.details,
+            hint: optionsError.hint,
+            code: optionsError.code
+          });
+          console.error('Attempted to insert:', bookingOptionsData);
+          
+          // Check if it's a column error (missing column)
+          if (optionsError.code === '42703' || optionsError.message?.includes('column') || optionsError.message?.includes('does not exist')) {
+            console.error('⚠️ Column error detected. The booking_options table may be missing required columns.');
+            console.error('Please ensure the booking_options table has: booking_id, cab_type, trip_type, start_date, end_date, number_of_nights');
+          }
+          
           // Don't fail the booking if options fail, but log it
-          showNotification('info', 'Booking Created', 'Booking created successfully, but some options may not have been saved.');
+          showNotification('info', 'Booking Created', 'Booking created successfully, but some options may not have been saved. Please contact support if this persists.');
+        } else {
+          console.log('✅ Booking options created successfully:', optionsData);
         }
 
         // Reset booking state
@@ -1023,6 +816,7 @@ export default function Home() {
         setSelectedTripType('');
         setStartDate('');
         setEndDate('');
+        setNumberOfNights(0);
         
         // Redirect to booking status page
         router.push(`/profile/booking-status?ref=${bookingRef}`);
@@ -1065,6 +859,7 @@ export default function Home() {
     setSelectedTripType('');
     setStartDate('');
     setEndDate('');
+    setNumberOfNights(0);
     
     // Fly back to pickup location if it exists, otherwise keep current view
     if (pickup) {
@@ -1590,16 +1385,44 @@ export default function Home() {
       {!isBookingSheetOpen && pickupLocked && isAdjustingDestination && (
         <div className="absolute bottom-0 left-0 right-0 px-3 sm:px-4 pb-safe-bottom z-[1001] safe-area-insets-bottom" style={{ paddingBottom: 'max(48px, calc(48px + env(safe-area-inset-bottom, 0px)))' }}>
           <button
-            onClick={() => {
+            onClick={async () => {
               // Confirm the adjusted destination
-              if (tempDestination) {
-                setDrop(tempDestination);
+              if (tempDestination && tempDestination.latitude && tempDestination.longitude) {
+                // Ensure all required fields are present, especially digipin
+                const destinationDigipin = tempDestination.digipin || digipin.getDIGIPINFromLatLon(tempDestination.latitude, tempDestination.longitude);
+                const confirmedDestination = {
+                  latitude: tempDestination.latitude,
+                  longitude: tempDestination.longitude,
+                  address: tempDestination.address || destinationDigipin,
+                  digipin: destinationDigipin,
+                  locality: tempDestination.locality,
+                  pincode: tempDestination.pincode,
+                  district: tempDestination.district,
+                  state: tempDestination.state,
+                };
+                
+                console.log('Confirming destination:', confirmedDestination);
+                
+                // First, exit adjustment mode and clear temp destination
                 setIsAdjustingDestination(false);
-                setIsBookingSheetOpen(true);
-                console.log('Destination confirmed:', tempDestination);
+                setTempDestination(null);
+                
+                // Then set the drop location - this will trigger route calculation via useEffect
+                setDrop(confirmedDestination);
+                
+                // Use requestAnimationFrame to ensure state updates are processed
+                // before opening the booking sheet
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    setIsBookingSheetOpen(true);
+                    console.log('Destination confirmed and locked, booking sheet opened');
+                  });
+                });
+              } else {
+                console.error('Cannot confirm destination: missing required fields', tempDestination);
               }
             }}
-            disabled={!tempDestination}
+            disabled={!tempDestination || !tempDestination.latitude || !tempDestination.longitude}
             className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold py-3 sm:py-4 md:py-5 rounded-2xl shadow-2xl flex items-center justify-center gap-2 hover:shadow-green-600/50 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed border-2 border-white/20 text-xs sm:text-sm md:text-base min-h-[44px] sm:min-h-[48px] md:min-h-[56px]"
           >
             <>
@@ -1714,7 +1537,11 @@ export default function Home() {
                     }
                   }}
                   min={getMinTime()}
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-budget-accent focus:outline-none transition-colors text-gray-800 font-medium"
+                  className={`flex-1 px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors text-gray-800 font-medium ${
+                    selectedDate && selectedTime && !isTimeAtLeast3HoursAway()
+                      ? 'border-yellow-400 focus:border-yellow-500 bg-yellow-50'
+                      : 'border-gray-200 focus:border-budget-accent'
+                  }`}
                 />
                 <div className="flex gap-2">
                   <button
@@ -1769,6 +1596,15 @@ export default function Home() {
                   </button>
                 </div>
               </div>
+              {/* Warning message if time is less than 3 hours away */}
+              {selectedDate && selectedTime && !isTimeAtLeast3HoursAway() && (
+                <div className="mt-2 px-4 py-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+                  <p className="text-sm text-yellow-800 font-semibold flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-yellow-600" />
+                    <span>⚠️ Bookings must be made at least 3 hours in advance. Please select a later time.</span>
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Trip Type Selection */}
@@ -1779,7 +1615,13 @@ export default function Home() {
               </label>
               <select
                 value={selectedTripType}
-                onChange={(e) => setSelectedTripType(e.target.value)}
+                onChange={(e) => {
+                  setSelectedTripType(e.target.value);
+                  // Reset nights when trip type changes
+                  if (e.target.value !== 'Outstation') {
+                    setNumberOfNights(0);
+                  }
+                }}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-budget-accent focus:outline-none transition-colors text-gray-800 font-medium bg-white appearance-none cursor-pointer"
                 required
               >
@@ -1790,6 +1632,29 @@ export default function Home() {
                 <option value="One Way">One Way</option>
               </select>
             </div>
+
+            {/* Number of Nights - Only for Outstation trips */}
+            {selectedTripType === 'Outstation' && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-budget-brand" />
+                  Number of Nights
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="30"
+                  value={numberOfNights || ''}
+                  onChange={(e) => setNumberOfNights(parseInt(e.target.value) || 0)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-budget-accent focus:outline-none transition-colors text-gray-800 font-medium"
+                  placeholder="Enter number of nights"
+                  required={selectedTripType === 'Outstation'}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Night stay charges: ₹{nightStayRate} per night
+                </p>
+              </div>
+            )}
 
             {/* Cab Type Selection */}
             <div>
@@ -1806,7 +1671,7 @@ export default function Home() {
                 <option value="">Select Cab Type</option>
                 {vehicleTypes.map((vehicle) => (
                   <option key={vehicle.name} value={vehicle.name}>
-                    {vehicle.name} {vehicle.multiplier !== 1.0 && `(${(vehicle.multiplier * 100).toFixed(0)}%)`}
+                    {vehicle.name}
                   </option>
                 ))}
               </select>
@@ -1859,35 +1724,27 @@ export default function Home() {
                       '₹--'
                     )}
                   </p>
-                  {distance && calculatedFare !== null && (() => {
-                    const currentPricing = getCurrentPricing();
-                    const timeSlotLabel = getTimeSlotLabel();
-                    const baseFare = (distance * currentPricing.per_km_rate) + currentPricing.base_fare;
-                    const vehicleMultiplier = selectedCabType && vehicleMultiplierMap[selectedCabType] 
-                      ? vehicleMultiplierMap[selectedCabType] 
-                      : 1.0;
-                    const vehicleAdjustedFare = baseFare * vehicleMultiplier;
-                    const nights = startDate && endDate ? calculateNights(startDate, endDate) : 0;
+                  {calculatedFare !== null && selectedCabType && selectedTripType && (() => {
+                    const pricingKey = `${selectedCabType}|${selectedTripType}`;
+                    const baseFare = pricingMap[pricingKey];
+                    if (!baseFare) return null;
+                    
+                    const nights = selectedTripType === 'Outstation' ? numberOfNights : 0;
                     const nightStayCharges = nights > 0 ? nights * nightStayRate : 0;
                     
                     return (
                       <>
                         <p className="text-xs text-gray-500 mt-1">
-                          Base: ₹{currentPricing.base_fare} + ₹{currentPricing.per_km_rate}/km
+                          Base Fare: ₹{baseFare}
                         </p>
-                        {selectedCabType && vehicleMultiplier !== 1.0 && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Vehicle ({selectedCabType.split(' ')[0]}): {vehicleMultiplier}x ({(vehicleMultiplier * 100).toFixed(0)}%)
-                          </p>
-                        )}
+                        <p className="text-xs text-gray-500 mt-1">
+                          {selectedCabType.split(' ')[0]} - {selectedTripType}
+                        </p>
                         {nights > 0 && (
                           <p className="text-xs text-gray-500 mt-1">
                             Night Stay ({nights} night{nights > 1 ? 's' : ''} @ ₹{nightStayRate}/night): ₹{nightStayCharges}
                           </p>
                         )}
-                        <p className="text-xs text-budget-brand font-semibold mt-1">
-                          {timeSlotLabel}
-                        </p>
                       </>
                     );
                   })()}
@@ -1916,7 +1773,7 @@ export default function Home() {
           <button
             className="w-full bg-budget-brand text-white py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
             onClick={handleConfirmBooking}
-            disabled={bookingInProgress || loadingRoute || !distance || !selectedDate || !selectedTime || !isValidDateTime() || !selectedCabType || !selectedTripType || !startDate}
+            disabled={bookingInProgress || loadingRoute || !selectedDate || !selectedTime || !isValidDateTime() || !selectedCabType || !selectedTripType || !startDate || (selectedTripType === 'Outstation' && (!numberOfNights || numberOfNights <= 0))}
           >
             {bookingInProgress ? (
               <>
