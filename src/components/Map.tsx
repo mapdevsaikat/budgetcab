@@ -47,8 +47,19 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
         // Only initialize once
         if (!mounted || map.current || !mapContainer.current) return;
 
-        // Support both variable names for backward compatibility
-        const apiKey = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || process.env.NEXT_PUBLIC_MAPTILER_KEY;
+        // Use requestAnimationFrame to ensure DOM is ready
+        const initMap = () => {
+            if (!mapContainer.current || map.current) return;
+            
+            // Double-check container exists and has dimensions
+            if (mapContainer.current.offsetWidth === 0 && mapContainer.current.offsetHeight === 0) {
+                // Container might not be visible yet, try again on next frame
+                requestAnimationFrame(initMap);
+                return;
+            }
+
+            // Support both variable names for backward compatibility
+            const apiKey = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || process.env.NEXT_PUBLIC_MAPTILER_KEY;
 
         console.log('[budgetcab Map] Initializing Leaflet map...');
         console.log('[budgetcab Map] API Key present:', !!apiKey);
@@ -70,6 +81,12 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
         try {
             console.log('[budgetcab Map] Creating Leaflet map instance...');
 
+            // Double-check container is still available
+            if (!mapContainer.current) {
+                console.error('[budgetcab Map] Container ref is null');
+                return;
+            }
+
             // Initialize the map WITHOUT zoom control (we'll add custom controls later if needed)
             map.current = L.map(mapContainer.current, {
                 center: L.latLng(center[0], center[1]),
@@ -79,6 +96,21 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
                 maxZoom: 20, // Set reasonable max zoom
             });
 
+            // Invalidate size to ensure Leaflet properly calculates container dimensions
+            // This fixes the containerPointToLayerPoint error
+            setTimeout(() => {
+                if (map.current) {
+                    map.current.invalidateSize();
+                }
+            }, 0);
+
+            // Verify map was created successfully
+            if (!map.current) {
+                console.error('[budgetcab Map] Failed to create map instance');
+                setError('Failed to initialize map. Please try refreshing the page.');
+                return;
+            }
+
             // Add error handler for tile loading errors
             map.current.on('tileerror', (error: any) => {
                 console.error('[budgetcab Map] Tile loading error:', error);
@@ -87,6 +119,9 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
 
             // Add MapTiler layer using the MaptilerLayer class with error handling
             try {
+                if (!map.current) {
+                    throw new Error('Map instance is null');
+                }
                 const mtLayer = new MaptilerLayer({
                     apiKey: apiKey,
                 }).addTo(map.current);
@@ -95,10 +130,16 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
             } catch (layerError) {
                 console.error('[budgetcab Map] Error creating MapTiler layer:', layerError);
                 setError(`Failed to initialize MapTiler layer: ${layerError instanceof Error ? layerError.message : 'Unknown error'}. Please check your API key in .env.local (NEXT_PUBLIC_MAPTILER_API_KEY).`);
+                // Clean up map if layer failed
+                if (map.current) {
+                    map.current.remove();
+                    map.current = null;
+                }
                 return;
             }
             // Setup event listeners
             map.current.on('load', () => {
+                if (!map.current) return;
                 console.log('[budgetcab Map] Map loaded successfully!');
                 mapLoadedRef.current = true;
                 setMapLoaded(true);
@@ -111,8 +152,12 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
                 }
 
                 if (onMoveEndRef.current && map.current) {
-                    const center = map.current.getCenter();
-                    onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                    try {
+                        const center = map.current.getCenter();
+                        onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                    } catch (err) {
+                        console.error('[budgetcab Map] Error getting center:', err);
+                    }
                 }
 
                 if (onLoadRef.current) {
@@ -134,8 +179,12 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
                     return;
                 }
                 if (onMoveEndRef.current && map.current) {
-                    const center = map.current.getCenter();
-                    onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                    try {
+                        const center = map.current.getCenter();
+                        onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                    } catch (err) {
+                        console.error('[budgetcab Map] Error getting center in moveend:', err);
+                    }
                 }
             });
 
@@ -177,6 +226,10 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
             console.error('[budgetcab Map] Error initializing map:', err);
             setError(`Failed to initialize map: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
+        };
+
+        // Start initialization
+        requestAnimationFrame(initMap);
 
         return () => {
             // Clear timeout on cleanup
@@ -187,12 +240,19 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
             
             if (map.current) {
                 console.log('[budgetcab Map] Cleaning up map instance');
-                if (userMarker.current) {
-                    userMarker.current.remove();
-                    userMarker.current = null;
+                try {
+                    if (userMarker.current) {
+                        userMarker.current.remove();
+                        userMarker.current = null;
+                    }
+                    // Remove all event listeners before removing map
+                    map.current.off();
+                    map.current.remove();
+                } catch (err) {
+                    console.error('[budgetcab Map] Error during cleanup:', err);
+                } finally {
+                    map.current = null;
                 }
-                map.current.remove();
-                map.current = null;
             }
             
             // Reset refs
@@ -214,8 +274,12 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
             console.log('[budgetcab Map] Geolocation not available in this browser');
             // No location available, set map center to default
             if (onMoveEndRef.current && map.current) {
-                const center = map.current.getCenter();
-                onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                try {
+                    const center = map.current.getCenter();
+                    onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                } catch (err) {
+                    console.error('[budgetcab Map] Error getting center:', err);
+                }
             }
             return;
         }
@@ -242,8 +306,12 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
                     isCheckingLocationRef.current = false;
                     // Set mapCenter to current location
                     if (onMoveEndRef.current && map.current) {
-                        const center = map.current.getCenter();
-                        onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                        try {
+                            const center = map.current.getCenter();
+                            onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                        } catch (err) {
+                            console.error('[budgetcab Map] Error getting center:', err);
+                        }
                     }
                     return;
                 }
@@ -251,19 +319,34 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
                 isAutoCenteringRef.current = true;
                 console.log('[budgetcab Map] Flying to user location...');
                 
+                // Ensure map is still available before calling methods
+                if (!map.current) {
+                    console.error('[budgetcab Map] Map instance is null, cannot fly to location');
+                    isAutoCenteringRef.current = false;
+                    isCheckingLocationRef.current = false;
+                    return;
+                }
+                
                 // Use setView with animation for smooth transition to user location
                 // Check if flyTo method exists (might be from a plugin), otherwise use setView
-                if (typeof (map.current as any).flyTo === 'function') {
-                    (map.current as any).flyTo([latitude, longitude], 16, {
-                        duration: 1.5,
-                        easeLinearity: 0.25
-                    });
-                } else {
-                    map.current.setView([latitude, longitude], 16, {
-                        animate: true,
-                        duration: 1.5,
-                        easeLinearity: 0.25
-                    });
+                try {
+                    if (typeof (map.current as any).flyTo === 'function') {
+                        (map.current as any).flyTo([latitude, longitude], 16, {
+                            duration: 1.5,
+                            easeLinearity: 0.25
+                        });
+                    } else {
+                        map.current.setView([latitude, longitude], 16, {
+                            animate: true,
+                            duration: 1.5,
+                            easeLinearity: 0.25
+                        });
+                    }
+                } catch (err) {
+                    console.error('[budgetcab Map] Error setting view:', err);
+                    isAutoCenteringRef.current = false;
+                    isCheckingLocationRef.current = false;
+                    return;
                 }
                 
                 // Update parent's mapCenter state after animation completes
@@ -271,8 +354,12 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
                     isAutoCenteringRef.current = false;
                     isCheckingLocationRef.current = false; // Location check complete
                     if (onMoveEndRef.current && map.current) {
-                        const center = map.current.getCenter();
-                        onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                        try {
+                            const center = map.current.getCenter();
+                            onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                        } catch (err) {
+                            console.error('[budgetcab Map] Error getting center after fly:', err);
+                        }
                     }
                     console.log('[budgetcab Map] Successfully centered on user location');
                 }, 1600); // Wait for animation to complete (1500ms + 100ms buffer)
@@ -285,8 +372,12 @@ const Map: React.FC<MapProps> = ({ center = [19.99932, 73.79004], zoom = 17, onM
                 
                 // Set mapCenter to default location since user location failed
                 if (onMoveEndRef.current && map.current) {
-                    const center = map.current.getCenter();
-                    onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                    try {
+                        const center = map.current.getCenter();
+                        onMoveEndRef.current({ lat: center.lat, lng: center.lng });
+                    } catch (err) {
+                        console.error('[budgetcab Map] Error getting center in geolocation error:', err);
+                    }
                 }
             },
             {

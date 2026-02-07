@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Shield, Users, MapPin, Sparkles, Phone, MessageCircle, Clock, Car, DollarSign } from 'lucide-react';
+import { ArrowRight, Shield, Users, MapPin, Sparkles, Phone, MessageCircle, Clock, Car, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function WelcomePage() {
   const router = useRouter();
   const [isAnimating, setIsAnimating] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -34,6 +38,54 @@ export default function WelcomePage() {
 
   const handleCall = () => {
     window.open('tel:+919860689292', '_blank');
+  };
+
+  // Features data
+  const features = [
+    { icon: Car, title: 'Clean Car', description: 'Well maintained', bgColor: 'bg-budget-brand/20' },
+    { icon: Clock, title: 'On Time', description: 'Punctual service', bgColor: 'bg-budget-accent/20' },
+    { icon: Users, title: 'Courteous', description: 'Professional driver', bgColor: 'bg-budget-warn/20' },
+    { icon: DollarSign, title: 'Affordable', description: 'For every pocket', bgColor: 'bg-budget-brand/20' },
+    { icon: Shield, title: 'Secure', description: 'Safe rides', bgColor: 'bg-budget-accent/20' },
+  ];
+
+  // Handle touch events for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (distance > minSwipeDistance) {
+      // Swipe left - next slide
+      setCurrentSlide((prev) => Math.min(prev + 1, Math.ceil(features.length / 2) - 1));
+    } else if (distance < -minSwipeDistance) {
+      // Swipe right - previous slide
+      setCurrentSlide((prev) => Math.max(prev - 1, 0));
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => Math.min(prev + 1, Math.ceil(features.length / 2) - 1));
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => Math.max(prev - 1, 0));
   };
 
   return (
@@ -106,46 +158,110 @@ export default function WelcomePage() {
           </p>
         </div>
 
-        {/* Features Grid - 5 Square Cards - Compact */}
-        <div className="w-full grid grid-cols-2 lg:grid-cols-5 gap-1.5 sm:gap-2 md:gap-2.5 px-4 sm:px-4 md:px-4 max-w-[400px] sm:max-w-[500px] md:max-w-[600px] flex-shrink-0">
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-2 sm:p-2 md:p-2 aspect-square border border-white/20 shadow-md hover:bg-white/15 transition-all flex flex-col items-center justify-center text-center">
-            <div className="w-8 h-8 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-budget-brand/20 rounded-lg flex items-center justify-center mb-1">
-              <Car className="w-5 h-5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-white drop-shadow-none" />
+        {/* Features - Mobile: Carousel, Desktop: Grid */}
+        <div className="w-full px-4 sm:px-4 md:px-4 max-w-[400px] sm:max-w-[500px] md:max-w-[600px] lg:max-w-5xl flex-shrink-0">
+          
+          {/* Mobile: Carousel layout */}
+          <div className="lg:hidden relative">
+            {/* Carousel Container */}
+            <div
+              ref={carouselRef}
+              className="overflow-hidden rounded-2xl relative"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {/* Navigation Arrows */}
+              {currentSlide > 0 && (
+                <button
+                  onClick={prevSlide}
+                  className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center text-white hover:bg-white/30 hover:scale-110 transition-all z-20 border border-white/30"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+              )}
+              {currentSlide < Math.ceil(features.length / 2) - 1 && (
+                <button
+                  onClick={nextSlide}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center text-white hover:bg-white/30 hover:scale-110 transition-all z-20 border border-white/30"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              )}
+
+              <div
+                className="flex transition-transform duration-300 ease-out"
+                style={{
+                  transform: `translateX(-${currentSlide * 100}%)`,
+                }}
+              >
+                {/* Group features into pairs (2 per slide) */}
+                {Array.from({ length: Math.ceil(features.length / 2) }).map((_, slideIndex) => (
+                  <div
+                    key={slideIndex}
+                    className="min-w-full flex gap-2 px-8 py-4"
+                  >
+                    {features.slice(slideIndex * 2, slideIndex * 2 + 2).map((feature, cardIndex) => {
+                      const Icon = feature.icon;
+                      const index = slideIndex * 2 + cardIndex;
+                      return (
+                        <div
+                          key={index}
+                          className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 shadow-md flex flex-col items-center justify-center text-center"
+                        >
+                          <div className={`w-12 h-12 ${feature.bgColor} rounded-xl flex items-center justify-center mb-2`}>
+                            <Icon className="w-6 h-6 text-white" />
+                          </div>
+                          <h3 className="text-xs font-bold text-white mb-1">{feature.title}</h3>
+                          <p className="text-[10px] text-white/80 leading-tight">{feature.description}</p>
+                        </div>
+                      );
+                    })}
+                    {/* Fill empty slot if odd number of features */}
+                    {features.length % 2 !== 0 && slideIndex === Math.ceil(features.length / 2) - 1 && (
+                      <div className="flex-1 opacity-0" />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-            <h3 className="text-[9px] sm:text-[10px] md:text-xs font-bold text-white mb-0.5">Clean Car</h3>
-            <p className="text-[8px] sm:text-[9px] text-white/80 leading-tight">Well maintained</p>
+
+            {/* Navigation Dots */}
+            <div className="flex justify-center gap-2 mt-4">
+              {Array.from({ length: Math.ceil(features.length / 2) }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    currentSlide === index
+                      ? 'w-6 bg-white shadow-md'
+                      : 'w-2 bg-white/40 hover:bg-white/60'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-2 sm:p-2 md:p-2 aspect-square border border-white/20 shadow-md hover:bg-white/15 transition-all flex flex-col items-center justify-center text-center">
-            <div className="w-8 h-8 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-budget-accent/20 rounded-lg flex items-center justify-center mb-1">
-              <Clock className="w-5 h-5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-white drop-shadow-none" />
-            </div>
-            <h3 className="text-[9px] sm:text-[10px] md:text-xs font-bold text-white mb-0.5">On Time</h3>
-            <p className="text-[8px] sm:text-[9px] text-white/80 leading-tight">Punctual service</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-2 sm:p-2 md:p-2 aspect-square border border-white/20 shadow-md hover:bg-white/15 transition-all flex flex-col items-center justify-center text-center">
-            <div className="w-8 h-8 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-budget-warn/20 rounded-lg flex items-center justify-center mb-1">
-              <Users className="w-5 h-5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-white drop-shadow-none" />
-            </div>
-            <h3 className="text-[9px] sm:text-[10px] md:text-xs font-bold text-white mb-0.5">Courteous</h3>
-            <p className="text-[8px] sm:text-[9px] text-white/80 leading-tight">Professional driver</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-2 sm:p-2 md:p-2 aspect-square border border-white/20 shadow-md hover:bg-white/15 transition-all flex flex-col items-center justify-center text-center">
-            <div className="w-8 h-8 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-budget-brand/20 rounded-lg flex items-center justify-center mb-1">
-              <DollarSign className="w-5 h-5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-white drop-shadow-none" />
-            </div>
-            <h3 className="text-[9px] sm:text-[10px] md:text-xs font-bold text-white mb-0.5">Affordable</h3>
-            <p className="text-[8px] sm:text-[9px] text-white/80 leading-tight">For every pocket</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-2 sm:p-2 md:p-2 aspect-square border border-white/20 shadow-md hover:bg-white/15 transition-all flex flex-col items-center justify-center text-center">
-            <div className="w-8 h-8 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-budget-accent/20 rounded-lg flex items-center justify-center mb-1">
-              <Shield className="w-5 h-5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-white drop-shadow-none" />
-            </div>
-            <h3 className="text-[9px] sm:text-[10px] md:text-xs font-bold text-white mb-0.5">Secure</h3>
-            <p className="text-[8px] sm:text-[9px] text-white/80 leading-tight">Safe rides</p>
+          {/* Desktop: Original Grid Layout */}
+          <div className="hidden lg:grid lg:grid-cols-5 gap-2.5">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={index}
+                  className="bg-white/10 backdrop-blur-md rounded-lg p-3 aspect-square border border-white/20 shadow-md hover:bg-white/15 transition-all flex flex-col items-center justify-center text-center"
+                >
+                  <div className={`w-10 h-10 ${feature.bgColor} rounded-lg flex items-center justify-center mb-2`}>
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-xs font-bold text-white mb-1">{feature.title}</h3>
+                  <p className="text-[10px] text-white/80 leading-tight">{feature.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -163,7 +279,7 @@ export default function WelcomePage() {
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <button
               onClick={handleWhatsApp}
-              className="bg-budget-accent text-white font-semibold py-2.5 sm:py-3 md:py-4 rounded-lg sm:rounded-xl shadow-lg flex items-center justify-center gap-1.5 sm:gap-2 hover:bg-budget-accent/90 active:scale-[0.98] transition-all text-xs sm:text-sm md:text-base min-h-[44px] sm:min-h-[48px]"
+              className="bg-[#25D366] text-white font-semibold py-2.5 sm:py-3 md:py-4 rounded-lg sm:rounded-xl shadow-lg flex items-center justify-center gap-1.5 sm:gap-2 hover:bg-[#22c35e] active:scale-[0.98] transition-all text-xs sm:text-sm md:text-base min-h-[44px] sm:min-h-[48px]"
             >
               <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               <span>WhatsApp</span>
@@ -183,14 +299,14 @@ export default function WelcomePage() {
           <div className="flex items-center justify-center gap-4 sm:gap-6 mb-3 sm:mb-4">
             <button
               onClick={() => router.push('/about')}
-              className="text-white/80 hover:text-white text-xs sm:text-sm font-medium transition-colors underline"
+              className="text-white/80 hover:text-white text-xs sm:text-sm font-medium transition-colors"
             >
               About Us
             </button>
             <span className="text-white/40">•</span>
             <button
               onClick={() => router.push('/contact')}
-              className="text-white/80 hover:text-white text-xs sm:text-sm font-medium transition-colors underline"
+              className="text-white/80 hover:text-white text-xs sm:text-sm font-medium transition-colors"
             >
               Contact
             </button>
@@ -202,7 +318,7 @@ export default function WelcomePage() {
                 href="https://sequens.in/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white hover:text-budget-warn underline transition-colors font-semibold"
+                className="text-white hover:text-budget-warn transition-colors font-semibold"
               >
                 Sequens LLP
               </a>
@@ -213,7 +329,7 @@ export default function WelcomePage() {
                 href="https://www.quantaroute.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/80 hover:text-budget-accent underline transition-colors"
+                className="text-white/80 hover:text-budget-accent transition-colors"
               >
                 QuantaRoute
               </a>

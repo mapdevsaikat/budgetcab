@@ -1,11 +1,15 @@
 'use client';
 
-import { Car, Clock, Shield, DollarSign, Users, CheckCircle, Phone, Mail, MapPin, Sparkles, ArrowRight, Star, TrendingUp, Award } from 'lucide-react';
+import { Car, Clock, Shield, DollarSign, Users, CheckCircle, Phone, Mail, MapPin, Sparkles, ArrowRight, Star, TrendingUp, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export default function AboutPage() {
   const [isVisible, setIsVisible] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
 
   useEffect(() => {
     setIsVisible(true);
@@ -53,6 +57,45 @@ export default function AboutPage() {
       iconColor: 'text-indigo-600',
     },
   ];
+
+  // Handle touch events for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (distance > minSwipeDistance) {
+      // Swipe left - next slide
+      setCurrentSlide((prev) => Math.min(prev + 1, Math.ceil(features.length / 2) - 1));
+    } else if (distance < -minSwipeDistance) {
+      // Swipe right - previous slide
+      setCurrentSlide((prev) => Math.max(prev - 1, 0));
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => Math.min(prev + 1, Math.ceil(features.length / 2) - 1));
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => Math.max(prev - 1, 0));
+  };
 
   const stats = [
     { number: '24/7', label: 'Available', icon: Clock },
@@ -193,7 +236,99 @@ export default function AboutPage() {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
+          {/* Mobile: Carousel layout - saves vertical space */}
+          <div className="sm:hidden relative">
+            {/* Carousel Container */}
+            <div
+              ref={carouselRef}
+              className="overflow-hidden rounded-xl"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div
+                className="flex transition-transform duration-300 ease-in-out"
+                style={{
+                  transform: `translateX(-${currentSlide * 100}%)`,
+                }}
+              >
+                {/* Group features into pairs (2 per slide) */}
+                {Array.from({ length: Math.ceil(features.length / 2) }).map((_, slideIndex) => (
+                  <div
+                    key={slideIndex}
+                    className="min-w-full flex gap-3 px-1"
+                  >
+                    {features.slice(slideIndex * 2, slideIndex * 2 + 2).map((feature, cardIndex) => {
+                      const Icon = feature.icon;
+                      const index = slideIndex * 2 + cardIndex;
+                      return (
+                        <div
+                          key={index}
+                          className={`flex-1 flex flex-col items-center justify-center p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200/50 ${
+                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                          }`}
+                          style={{ transitionDelay: `${index * 100}ms`, transition: 'opacity 0.6s ease, transform 0.6s ease' }}
+                        >
+                          {/* Icon - centered */}
+                          <div className={`w-16 h-16 ${feature.bgColor} rounded-xl flex items-center justify-center mb-3`}>
+                            <Icon className={`w-8 h-8 ${feature.iconColor}`} />
+                          </div>
+                          {/* Content */}
+                          <h3 className="text-sm font-bold text-gray-900 mb-1 text-center leading-tight">
+                            {feature.title}
+                          </h3>
+                          <p className="text-xs text-gray-600 text-center leading-tight">{feature.description}</p>
+                        </div>
+                      );
+                    })}
+                    {/* Fill empty slot if odd number of features */}
+                    {features.length % 2 !== 0 && slideIndex === Math.ceil(features.length / 2) - 1 && (
+                      <div className="flex-1" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Navigation Dots */}
+            <div className="flex justify-center gap-2 mt-4">
+              {Array.from({ length: Math.ceil(features.length / 2) }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    currentSlide === index
+                      ? 'w-8 bg-budget-brand'
+                      : 'w-2 bg-gray-300'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Optional: Navigation Arrows */}
+            {currentSlide > 0 && (
+              <button
+                onClick={prevSlide}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:bg-white transition-all z-10"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+            {currentSlide < Math.ceil(features.length / 2) - 1 && (
+              <button
+                onClick={nextSlide}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:bg-white transition-all z-10"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Desktop: Original grid layout with hover effects */}
+          <div className="hidden sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (

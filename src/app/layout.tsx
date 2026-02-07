@@ -22,39 +22,67 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://budgetcabsservices.com'),
+  metadataBase: new URL('https://budgetcab.vercel.app'),
   title: "Budget Cabs Service Nashik | Airport Transfer | Nashik-Mumbai-Pune Taxi",
-  description: "Book affordable taxi service from Nashik to Mumbai, Pune, and airport transfers. Budget Cabs Service offers reliable intercity cabs, Nashik-Mumbai taxi, Nashik-Pune cab, Malegaon taxi, and Mumbai Airport transfers. Call 9860689292 for bookings.",
+  description: "Book affordable taxi service from Nashik to Mumbai, Pune, Shirdi, and airport transfers. Budget Cabs Service offers reliable intercity cabs, one-way taxi, round trip, and sharing cabs. Call 9860689292.",
   keywords: [
+    // Core Services
     "Nashik taxi service",
-    "Nashik to Mumbai taxi",
-    "Nashik to Pune cab",
-    "Mumbai to Nashik taxi",
-    "Pune to Nashik cab",
-    "Nashik airport transfer",
-    "Mumbai airport transfer",
-    "Nashik-Mumbai taxi",
-    "Nashik-Pune taxi",
-    "Malegaon taxi",
     "Nashik cab service",
     "intercity taxi Nashik",
-    "budget cab Nashik",
-    "affordable taxi Nashik",
+    "outstation taxi Nashik",
     "Nashik taxi booking",
-    "cab service Nashik",
-    "Nashik to Mumbai airport",
-    "Nashik to Pune airport",
-    "Panchavati taxi",
-    "Gangapur Road taxi",
-    "Satpur taxi",
-    "Ambad taxi",
+    "online cab booking Nashik",
+    "24x7 taxi service Nashik",
+    
+    // Major Routes (Mumbai)
+    "Nashik to Mumbai taxi",
+    "Mumbai to Nashik taxi",
+    "Nashik to Mumbai cab fare",
+    "Mumbai to Nashik cab price",
+    "Nashik to Mumbai airport taxi",
+    "Mumbai airport to Nashik taxi",
+    "Nashik to Mumbai one way cab",
+    "Nashik to Dadar taxi",
+    "Nashik to Borivali taxi",
+    "Nashik to Thane taxi",
+    
+    // Major Routes (Pune)
+    "Nashik to Pune cab",
+    "Pune to Nashik cab",
+    "Nashik to Pune taxi fare",
+    "Pune to Nashik taxi service",
+    "Nashik to Pune airport taxi",
+    "Pune airport to Nashik cab",
+    
+    // Pilgrimage & Tourism
+    "Nashik to Shirdi taxi",
+    "Shirdi to Nashik taxi",
+    "Mumbai to Shirdi taxi",
+    "Nashik to Trimbakeshwar taxi",
+    "Nashik darshan taxi",
+    "Sula Vineyards taxi",
+    
+    // Local & Nearby
+    "Malegaon taxi",
     "Sinnar taxi",
     "Igatpuri taxi",
-    "Trimbakeshwar taxi",
-    "Shirdi taxi",
+    "Panchavati taxi",
+    "Gangapur Road taxi",
+    "Nashik local rental",
+    
+    // Service Types & Qualities
+    "budget cab Nashik",
+    "cheap taxi Nashik",
+    "affordable taxi Nashik",
+    "luxury cab Nashik",
     "sharing cab Nashik",
-    "Nashik local taxi",
-    "outstation taxi Nashik"
+    "cool cab Nashik",
+    "AC taxi Nashik",
+    "Innova rental Nashik",
+    "Ertiga cab Nashik",
+    "Sedan taxi Nashik",
+    "corporate car rental Nashik"
   ],
   authors: [{ name: "Budget Cabs Service" }],
   robots: {
@@ -64,7 +92,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Budget Cabs Service",
-    url: "https://budgetcabsservices.com/",
+    url: "https://budgetcab.vercel.app/",
     title: "Budget Cabs Service Nashik | Airport Transfer | Nashik-Mumbai-Pune Taxi",
     description: "Affordable intercity taxi service from Nashik to Mumbai, Pune, and airport transfers. Reliable Nashik-Mumbai-Pune cabs, Malegaon taxi, and Mumbai Airport transfers. 24/7 availability.",
     images: [
@@ -117,7 +145,7 @@ export default function RootLayout({
     "provider": {
       "@type": "LocalBusiness",
       "name": "Budget Cabs Service",
-      "image": "https://budgetcabsservices.com/android-chrome-512x512.png",
+      "image": "https://budgetcab.vercel.app/android-chrome-512x512.png",
       "telePhone": "+91-9860689292",
       "email": "info@budgetcabsservices.com",
       "priceRange": "₹₹",
