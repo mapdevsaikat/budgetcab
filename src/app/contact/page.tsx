@@ -141,10 +141,21 @@ export default function ContactPage() {
           </div>
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-budget-brand/5 to-budget-accent/5 rounded-xl p-6 border-2 border-budget-brand/20">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Address:</h3>
-              <p className="text-gray-700 leading-relaxed">
-                Budget cab services, Hotel Sai Pritam, near Dwarka circle, Nashik, General Arun Kumar Vaidya Nagar, Wadala Naka, General Vaidya Nagar, Nashik, Maharashtra 422011
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Addresses</h3>
+              <div className="space-y-4">
+                <div>
+                  <span className="text-sm font-semibold text-budget-brand uppercase tracking-wide">Nashik</span>
+                  <p className="text-gray-700 leading-relaxed mt-1">
+                    Budget cab services, Hotel Sai Pritam, near Dwarka circle, Nashik, General Arun Kumar Vaidya Nagar, Wadala Naka, General Vaidya Nagar, Nashik, Maharashtra 422011
+                  </p>
+                </div>
+                <div>
+                  <span className="text-sm font-semibold text-budget-brand uppercase tracking-wide">Mumbai (Andheri)</span>
+                  <p className="text-gray-700 leading-relaxed mt-1">
+                    16 Plot 175, R-2, B-Wing, Majas Vlg Andheri (E) NR.Poonam Nagar Mumbai, 400060
+                  </p>
+                </div>
+              </div>
             </div>
             <div className="rounded-xl overflow-hidden border-2 border-gray-200 aspect-video w-full">
               <iframe
