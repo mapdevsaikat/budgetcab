@@ -128,6 +128,40 @@ export default function ContactPage() {
           </div>
         </div>
 
+        {/* Address Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-10 mb-12">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-budget-brand to-budget-accent rounded-xl flex items-center justify-center">
+              <MapPin className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Our Location</h2>
+              <p className="text-gray-600 mt-1">Visit us at our office</p>
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-budget-brand/5 to-budget-accent/5 rounded-xl p-6 border-2 border-budget-brand/20">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Address:</h3>
+              <p className="text-gray-700 leading-relaxed">
+                Budget cab services, Hotel Sai Pritam, near Dwarka circle, Nashik, General Arun Kumar Vaidya Nagar, Wadala Naka, General Vaidya Nagar, Nashik, Maharashtra 422011
+              </p>
+            </div>
+            <div className="rounded-xl overflow-hidden border-2 border-gray-200 aspect-video w-full">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d937.3491761844768!2d73.7937136!3d19.9918583!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bddeb329ae20ed9%3A0x291c0c5b777ba574!2sBudget%20cab%20services!5e0!3m2!1sen!2sin!4v1770818997051!5m2!1sen!2sin"
+                width="100%"
+                height="450"
+                style={{ border: 0, width: '100%', height: '100%' }}
+                allowFullScreen={true}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full h-full"
+                title="Budget Cab Services Location"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
           <a

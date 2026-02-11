@@ -27,6 +27,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
               "connect-src 'self' https://api.maptiler.com https://*.maptiler.com https://*.supabase.co https://api.mapbox.com https://quantaroute.com https://api.quantaroute.com",
+              "frame-src 'self' https://www.google.com https://*.google.com https://*.googleapis.com",
               "worker-src 'self' blob:",
             ].join('; ')
           },
