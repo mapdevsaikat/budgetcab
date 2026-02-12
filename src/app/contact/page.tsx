@@ -76,18 +76,33 @@ export default function ContactPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         {/* Contact Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          {/* Phone Number 1 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {/* Phone Number - Nashik */}
           <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-shadow">
             <div className="w-16 h-16 bg-budget-brand/10 rounded-xl flex items-center justify-center mb-6">
               <Phone className="w-8 h-8 text-budget-brand" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Call Us</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-1">Call Us - Nashik</h3>
             <a
               href="tel:+919860689292"
               className="text-2xl font-bold text-budget-brand hover:text-budget-brand/80 transition-colors block mb-2"
             >
-              98606 89292
+              +91-9860689292
+            </a>
+            <p className="text-gray-600 text-sm">Tap to call directly</p>
+          </div>
+
+          {/* Phone Number - Mumbai */}
+          <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-shadow">
+            <div className="w-16 h-16 bg-budget-brand/10 rounded-xl flex items-center justify-center mb-6">
+              <Phone className="w-8 h-8 text-budget-brand" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-1">Call Us - Mumbai</h3>
+            <a
+              href="tel:+918975900092"
+              className="text-2xl font-bold text-budget-brand hover:text-budget-brand/80 transition-colors block mb-2"
+            >
+              +91-8975900092
             </a>
             <p className="text-gray-600 text-sm">Tap to call directly</p>
           </div>
@@ -148,12 +163,20 @@ export default function ContactPage() {
                   <p className="text-gray-700 leading-relaxed mt-1">
                     Budget cab services, Hotel Sai Pritam, near Dwarka circle, Nashik, General Arun Kumar Vaidya Nagar, Wadala Naka, General Vaidya Nagar, Nashik, Maharashtra 422011
                   </p>
+                  <a href="tel:+919860689292" className="flex items-center gap-2 text-budget-brand hover:text-budget-brand/80 transition-colors mt-2 font-semibold">
+                    <Phone className="w-4 h-4" />
+                    <span>+91-9860689292</span>
+                  </a>
                 </div>
                 <div>
                   <span className="text-sm font-semibold text-budget-brand uppercase tracking-wide">Mumbai (Andheri)</span>
                   <p className="text-gray-700 leading-relaxed mt-1">
-                    16 Plot 175, R-2, B-Wing, Majas Vlg Andheri (E) NR.Poonam Nagar Mumbai, 400060
+                    16 PLOT 175, R-2, B-WING, MAJAS VLG ANDHERI (E) NR.POONAM NAGAR MUMBAI, 400060
                   </p>
+                  <a href="tel:+918975900092" className="flex items-center gap-2 text-budget-brand hover:text-budget-brand/80 transition-colors mt-2 font-semibold">
+                    <Phone className="w-4 h-4" />
+                    <span>+91-8975900092</span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -257,11 +280,21 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-lg font-bold mb-4">Contact Us</h3>
-              <div className="space-y-2">
-                <a href="tel:+919860689292" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
-                  <Phone className="w-4 h-4" />
-                  <span>98606 89292</span>
-                </a>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Nashik</p>
+                  <a href="tel:+919860689292" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
+                    <Phone className="w-4 h-4" />
+                    <span>+91-9860689292</span>
+                  </a>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Mumbai</p>
+                  <a href="tel:+918975900092" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
+                    <Phone className="w-4 h-4" />
+                    <span>+91-8975900092</span>
+                  </a>
+                </div>
                 <a href="mailto:info@budgetcabsservices.com" className="flex items-center gap-2 hover:text-budget-warn transition-colors">
                   <Mail className="w-4 h-4" />
                   <span>info@budgetcabsservices.com</span>

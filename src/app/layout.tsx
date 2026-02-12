@@ -140,74 +140,142 @@ export default function RootLayout({
 }>) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "TaxiService",
-    "name": "Budget Cabs Service",
-    "description": "Affordable intercity taxi service from Nashik to Mumbai, Pune, and airport transfers. Nashik-Mumbai-Pune cabs, Malegaon taxi, and reliable rides.",
-    "provider": {
-      "@type": "LocalBusiness",
-      "name": "Budget Cabs Service",
-      "image": "https://budgetcab.vercel.app/android-chrome-512x512.png",
-      "telePhone": "+91-9860689292",
-      "email": "info@budgetcabsservices.com",
-      "priceRange": "₹₹",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Nashik",
-        "addressRegion": "Maharashtra",
-        "addressCountry": "IN"
-      }
-    },
-    "areaServed": [
+    "@graph": [
       {
-        "@type": "City",
-        "name": "Nashik"
+        "@type": "Organization",
+        "@id": "https://budgetcabsservices.com/#organization",
+        "name": "Budget Cabs Service",
+        "url": "https://budgetcabsservices.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://budgetcab.vercel.app/android-chrome-512x512.png"
+        },
+        "contactPoint": [
+          {
+            "@type": "ContactPoint",
+            "telephone": "+91-9860689292",
+            "contactType": "customer service",
+            "availableLanguage": ["English", "Hindi", "Marathi"],
+            "areaServed": "Nashik"
+          },
+          {
+            "@type": "ContactPoint",
+            "telephone": "+91-8975900092",
+            "contactType": "customer service",
+            "availableLanguage": ["English", "Hindi", "Marathi"],
+            "areaServed": "Mumbai"
+          }
+        ],
+        "email": "info@budgetcabsservices.com"
       },
       {
-        "@type": "City",
-        "name": "Mumbai"
-      },
-      {
-        "@type": "City",
-        "name": "Pune"
-      },
-      {
-        "@type": "City",
-        "name": "Malegaon"
-      },
-      {
-        "@type": "City",
-        "name": "Sinnar"
-      },
-      {
-        "@type": "City",
-        "name": "Igatpuri"
-      },
-      {
-        "@type": "City",
-        "name": "Trimbakeshwar"
-      },
-      {
-        "@type": "City",
-        "name": "Shirdi"
-      }
-    ],
-    "serviceType": [
-      "Intercity Taxi Service",
-      "Airport Transfer",
-      "Nashik to Mumbai Taxi",
-      "Nashik to Pune Taxi",
-      "Mumbai Airport Transfer",
-      "Pune Airport Transfer",
-      "Outstation Taxi"
-    ],
-    "contactPoint": [
-      {
-        "@type": "ContactPoint",
+        "@type": ["LocalBusiness", "TaxiService"],
+        "@id": "https://budgetcabsservices.com/#nashik-location",
+        "name": "Budget Cabs Service - Nashik",
+        "image": "https://budgetcab.vercel.app/android-chrome-512x512.png",
         "telephone": "+91-9860689292",
-        "contactType": "booking and customer service",
-        "availableLanguage": ["English", "Hindi", "Marathi"],
-        "areaServed": ["IN"],
-        "availableChannel": ["Phone", "WhatsApp"]
+        "email": "info@budgetcabsservices.com",
+        "priceRange": "₹₹",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Hotel Sai Pritam, near Dwarka circle, General Arun Kumar Vaidya Nagar, Wadala Naka",
+          "addressLocality": "Nashik",
+          "addressRegion": "Maharashtra",
+          "postalCode": "422011",
+          "addressCountry": "IN"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": "19.9918583",
+          "longitude": "73.7937136"
+        },
+        "url": "https://budgetcabsservices.com",
+        "openingHoursSpecification": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "opens": "00:00",
+          "closes": "23:59"
+        },
+        "areaServed": [
+          {
+            "@type": "City",
+            "name": "Nashik"
+          },
+          {
+            "@type": "City",
+            "name": "Mumbai"
+          },
+          {
+            "@type": "City",
+            "name": "Pune"
+          },
+          {
+            "@type": "City",
+            "name": "Malegaon"
+          }
+        ],
+        "serviceType": [
+          "Intercity Taxi Service",
+          "Airport Transfer",
+          "Nashik to Mumbai Taxi",
+          "Nashik to Pune Taxi",
+          "Outstation Taxi"
+        ]
+      },
+      {
+        "@type": ["LocalBusiness", "TaxiService"],
+        "@id": "https://budgetcabsservices.com/#mumbai-location",
+        "name": "Budget Cabs Service - Mumbai",
+        "image": "https://budgetcab.vercel.app/android-chrome-512x512.png",
+        "telephone": "+91-8975900092",
+        "email": "info@budgetcabsservices.com",
+        "priceRange": "₹₹",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "16 PLOT 175, R-2, B-WING, MAJAS VLG, NR.POONAM NAGAR",
+          "addressLocality": "Andheri East, Mumbai",
+          "addressRegion": "Maharashtra",
+          "postalCode": "400060",
+          "addressCountry": "IN"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": "19.1136",
+          "longitude": "72.8697"
+        },
+        "url": "https://budgetcabsservices.com",
+        "openingHoursSpecification": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "opens": "00:00",
+          "closes": "23:59"
+        },
+        "areaServed": [
+          {
+            "@type": "City",
+            "name": "Mumbai"
+          },
+          {
+            "@type": "City",
+            "name": "Nashik"
+          },
+          {
+            "@type": "City",
+            "name": "Pune"
+          },
+          {
+            "@type": "City",
+            "name": "Thane"
+          }
+        ],
+        "serviceType": [
+          "Intercity Taxi Service",
+          "Airport Transfer",
+          "Mumbai to Nashik Taxi",
+          "Mumbai to Pune Taxi",
+          "Mumbai Airport Transfer",
+          "Outstation Taxi"
+        ]
       }
     ]
   };

@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://budgetcab.vercel.app';
+  // Use production domain as primary, Vercel as alternate
+  const baseUrl = 'https://budgetcabsservices.com';
   const now = new Date();
 
   // Public pages with their priorities and change frequencies
@@ -13,6 +14,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: 'weekly',
       priority: 1.0,
+      alternates: {
+        languages: {
+          'x-default': 'https://budgetcab.vercel.app',
+        },
+      },
     },
     // Booking page - High priority, core functionality
     {
@@ -20,6 +26,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: 'daily',
       priority: 0.9,
+      alternates: {
+        languages: {
+          'x-default': 'https://budgetcab.vercel.app/booking',
+        },
+      },
     },
     // About page - Important for E-E-A-T (Experience, Expertise, Authoritativeness, and Trustworthiness)
     {
@@ -27,13 +38,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.8,
+      alternates: {
+        languages: {
+          'x-default': 'https://budgetcab.vercel.app/about',
+        },
+      },
     },
-    // Contact page - Important for trust and local SEO
+    // Contact page - Important for trust and local SEO with multi-location info
     {
       url: `${baseUrl}/contact`,
       lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.8,
+      changeFrequency: 'weekly', // Changed to weekly since we have dynamic location info
+      priority: 0.9, // Increased priority for local SEO with multiple locations
+      alternates: {
+        languages: {
+          'x-default': 'https://budgetcab.vercel.app/contact',
+        },
+      },
     },
     // Onboarding (Login/Signup) - Useful for users searching for login
     {
@@ -41,6 +62,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.7,
+      alternates: {
+        languages: {
+          'x-default': 'https://budgetcab.vercel.app/onboarding',
+        },
+      },
     },
   ];
 
