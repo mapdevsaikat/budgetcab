@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About Us | Budget Cabs Service Nashik - Premium Intercity Taxi Service',
-  description: 'Budget Cabs Service is a trusted online cab booking aggregator providing premium intercity and local car rental services in Nashik, Mumbai, Pune, and surrounding areas. Book reliable taxi service with 24/7 assistance.',
+  title: 'About Us',
+  description:
+    'Budget Cabs Service is a trusted online cab booking aggregator providing premium intercity and local car rental services in Nashik, Mumbai, Pune, and surrounding areas. Book reliable taxi service with 24/7 assistance.',
   keywords: [
     'Budget Cabs Service about',
     'Nashik taxi service company',
@@ -11,12 +12,16 @@ export const metadata: Metadata = {
     'car rental service Nashik',
     'premium taxi service',
     'reliable cab service',
-    '24/7 taxi service Nashik'
+    '24/7 taxi service Nashik',
   ],
+  alternates: {
+    canonical: '/about',
+  },
   openGraph: {
-    title: 'About Budget Cabs Service - Premium Intercity Taxi Service',
-    description: 'Trusted online cab booking aggregator providing premium intercity and local car rental services in Nashik, Mumbai, Pune, and surrounding areas.',
+    description:
+      'Trusted online cab booking aggregator providing premium intercity and local car rental services in Nashik, Mumbai, Pune, and surrounding areas.',
     type: 'website',
+    url: '/about',
   },
 };
 

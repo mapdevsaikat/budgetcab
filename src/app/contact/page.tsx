@@ -3,8 +3,9 @@ import { Car, Phone, Mail, Clock, MapPin, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Contact Us | Budget Cabs Service Nashik - 24/7 Customer Support',
-  description: 'Contact Budget Cabs Service for taxi bookings in Nashik, Mumbai, Pune. Call 9860689292, email info@budgetcabsservices.com. Available 24/7 for your travel needs.',
+  title: 'Contact Us',
+  description:
+    'Contact Budget Cabs Service for taxi bookings in Nashik, Mumbai, Pune. Call 9860689292, email info@budgetcabsservices.com. Available 24/7 for your travel needs.',
   keywords: [
     'Budget Cabs Service contact',
     'Nashik taxi contact number',
@@ -12,12 +13,16 @@ export const metadata: Metadata = {
     'taxi service contact Nashik',
     'Budget Cabs phone number',
     '24/7 taxi service contact',
-    'Nashik cab booking contact'
+    'Nashik cab booking contact',
   ],
+  alternates: {
+    canonical: '/contact',
+  },
   openGraph: {
-    title: 'Contact Budget Cabs Service - 24/7 Customer Support',
-    description: 'Get in touch with Budget Cabs Service for taxi bookings. Call 9860689292 or email info@budgetcabsservices.com. Available 24/7.',
+    description:
+      'Get in touch with Budget Cabs Service for taxi bookings. Call 9860689292 or email info@budgetcabsservices.com. Available 24/7.',
     type: 'website',
+    url: '/contact',
   },
 };
 

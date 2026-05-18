@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { getSiteUrl, shouldBlockIndexing } from "@/lib/site-url";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -22,11 +24,25 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://budgetcab.vercel.app'),
-  title: "Budget Cabs Service Nashik | Airport Transfer | Nashik-Mumbai-Pune Taxi",
-  description: "Book affordable taxi service from Nashik to Mumbai, Pune, Shirdi, and airport transfers. Budget Cabs Service offers reliable intercity cabs, one-way taxi, round trip, and sharing cabs. Call 9860689292.",
-  keywords: [
+const defaultTitle =
+  "Budget Cabs Service Nashik | Airport Transfer | Nashik-Mumbai-Pune Taxi";
+const defaultDescription =
+  "Book affordable taxi service from Nashik to Mumbai, Pune, Shirdi, and airport transfers. Budget Cabs Service offers reliable intercity cabs, one-way taxi, round trip, and sharing cabs. Call 9860689292.";
+const defaultOgDescription =
+  "Affordable intercity taxi service from Nashik to Mumbai, Pune, and airport transfers. Reliable Nashik-Mumbai-Pune cabs, Malegaon taxi, and Mumbai Airport transfers. 24/7 availability.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const baseUrl = getSiteUrl();
+  const blocked = shouldBlockIndexing();
+
+  return {
+    metadataBase: new URL(baseUrl),
+    title: {
+      default: defaultTitle,
+      template: "%s | Budget Cabs Service Nashik",
+    },
+    description: defaultDescription,
+    keywords: [
     // Core Services
     "Nashik taxi service",
     "Nashik cab service",
@@ -85,70 +101,82 @@ export const metadata: Metadata = {
     "Sedan taxi Nashik",
     "corporate car rental Nashik"
   ],
-  authors: [{ name: "Budget Cabs Service" }],
-  robots: {
-    index: true,
-    follow: true,
-  },
-  openGraph: {
-    type: "website",
-    siteName: "Budget Cabs Service",
-    url: "https://budgetcab.vercel.app/",
-    title: "Budget Cabs Service Nashik | Airport Transfer | Nashik-Mumbai-Pune Taxi",
-    description: "Affordable intercity taxi service from Nashik to Mumbai, Pune, and airport transfers. Reliable Nashik-Mumbai-Pune cabs, Malegaon taxi, and Mumbai Airport transfers. 24/7 availability.",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "Budget Cabs Service Nashik - Airport Transfer & Intercity Taxi Service",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Budget Cabs Service Nashik | Nashik-Mumbai-Pune Taxi & Airport Transfer",
-    description: "Affordable, professional taxi service from Nashik to Mumbai, Pune, and airport transfers. Nashik-Mumbai-Pune cabs, Malegaon taxi. 24/7 availability.",
-    images: ["/opengraph-image"],
-  },
-  icons: {
-    icon: [
-      { url: '/favicon.ico' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/apple-touch-icon.png' },
-    ],
-    other: [
-      { rel: 'android-chrome-192x192', url: '/android-chrome-192x192.png' },
-      { rel: 'android-chrome-512x512', url: '/android-chrome-512x512.png' },
-    ],
-  },
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Budget Cabs Service',
-  },
-};
+    authors: [{ name: "Budget Cabs Service" }],
+    robots: blocked
+      ? { index: false, follow: false }
+      : { index: true, follow: true },
+    alternates: {
+      canonical: "/",
+    },
+    openGraph: {
+      type: "website",
+      siteName: "Budget Cabs Service",
+      url: `${baseUrl}/`,
+      title: defaultTitle,
+      description: defaultOgDescription,
+      images: [
+        {
+          url: "/opengraph-image",
+          width: 1200,
+          height: 630,
+          alt: "Budget Cabs Service Nashik - Airport Transfer & Intercity Taxi Service",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title:
+        "Budget Cabs Service Nashik | Nashik-Mumbai-Pune Taxi & Airport Transfer",
+      description:
+        "Affordable, professional taxi service from Nashik to Mumbai, Pune, and airport transfers. Nashik-Mumbai-Pune cabs, Malegaon taxi. 24/7 availability.",
+      images: ["/opengraph-image"],
+    },
+    icons: {
+      icon: [
+        { url: "/favicon.ico" },
+        { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      ],
+      apple: [{ url: "/apple-touch-icon.png" }],
+      other: [
+        { rel: "android-chrome-192x192", url: "/android-chrome-192x192.png" },
+        { rel: "android-chrome-512x512", url: "/android-chrome-512x512.png" },
+      ],
+    },
+    manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: "Budget Cabs Service",
+    },
+  };
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const baseUrl = getSiteUrl();
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "Organization",
-        "@id": "https://budgetcabsservices.com/#organization",
+        "@type": "WebSite",
+        "@id": `${baseUrl}/#website`,
+        "url": baseUrl,
         "name": "Budget Cabs Service",
-        "url": "https://budgetcabsservices.com",
+        "inLanguage": "en-IN",
+        "publisher": { "@id": `${baseUrl}/#organization` },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${baseUrl}/#organization`,
+        "name": "Budget Cabs Service",
+        "url": baseUrl,
         "logo": {
           "@type": "ImageObject",
-          "url": "https://budgetcab.vercel.app/android-chrome-512x512.png"
+          "url": `${baseUrl}/android-chrome-512x512.png`,
         },
         "contactPoint": [
           {
@@ -170,9 +198,9 @@ export default function RootLayout({
       },
       {
         "@type": ["LocalBusiness", "TaxiService"],
-        "@id": "https://budgetcabsservices.com/#nashik-location",
+        "@id": `${baseUrl}/#nashik-location`,
         "name": "Budget Cabs Service - Nashik",
-        "image": "https://budgetcab.vercel.app/android-chrome-512x512.png",
+        "image": `${baseUrl}/android-chrome-512x512.png`,
         "telephone": "+91-9860689292",
         "email": "info@budgetcabsservices.com",
         "priceRange": "₹₹",
@@ -189,13 +217,14 @@ export default function RootLayout({
           "latitude": "19.9918583",
           "longitude": "73.7937136"
         },
-        "url": "https://budgetcabsservices.com",
+        "url": baseUrl,
         "openingHoursSpecification": {
           "@type": "OpeningHoursSpecification",
           "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
           "opens": "00:00",
           "closes": "23:59"
         },
+        "parentOrganization": { "@id": `${baseUrl}/#organization` },
         "areaServed": [
           {
             "@type": "City",
@@ -224,9 +253,9 @@ export default function RootLayout({
       },
       {
         "@type": ["LocalBusiness", "TaxiService"],
-        "@id": "https://budgetcabsservices.com/#mumbai-location",
+        "@id": `${baseUrl}/#mumbai-location`,
         "name": "Budget Cabs Service - Mumbai",
-        "image": "https://budgetcab.vercel.app/android-chrome-512x512.png",
+        "image": `${baseUrl}/android-chrome-512x512.png`,
         "telephone": "+91-8975900092",
         "email": "info@budgetcabsservices.com",
         "priceRange": "₹₹",
@@ -243,13 +272,14 @@ export default function RootLayout({
           "latitude": "19.1136",
           "longitude": "72.8697"
         },
-        "url": "https://budgetcabsservices.com",
+        "url": baseUrl,
         "openingHoursSpecification": {
           "@type": "OpeningHoursSpecification",
           "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
           "opens": "00:00",
           "closes": "23:59"
         },
+        "parentOrganization": { "@id": `${baseUrl}/#organization` },
         "areaServed": [
           {
             "@type": "City",
@@ -307,6 +337,7 @@ export default function RootLayout({
         <EnvWarningBanner />
         <PWAInstallPrompt />
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );

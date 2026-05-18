@@ -15,6 +15,7 @@
   "dependencies": {
     "@maptiler/leaflet-maptilersdk": "^4.1.1",
     "@supabase/supabase-js": "^2.89.0",
+    "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.1",
     "digipin": "^0.0.1",
     "leaflet": "^1.9.4",
