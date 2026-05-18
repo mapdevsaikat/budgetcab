@@ -62,15 +62,18 @@ export default function PWAInstallPrompt() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Check if app was just installed
-    window.addEventListener('appinstalled', () => {
+    const handleAppInstalled = () => {
       setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
-    });
+      localStorage.removeItem('pwa-install-dismissed');
+    };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -122,15 +125,17 @@ export default function PWAInstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md z-50 animate-slide-up">
-      <div className="bg-white rounded-2xl shadow-2xl border-2 border-budget-brand/20 p-4 sm:p-5 backdrop-blur-lg">
+    <div
+      className="fixed left-[max(1rem,env(safe-area-inset-left,0px))] right-[max(1rem,env(safe-area-inset-right,0px))] bottom-[max(1rem,env(safe-area-inset-bottom,0px))] sm:left-auto sm:max-w-md sm:right-[max(1rem,env(safe-area-inset-right,0px))] z-50 animate-slide-up"
+    >
+      <div className="bg-white rounded-2xl shadow-2xl border-2 border-budget-brand/20 p-5 sm:p-6 backdrop-blur-lg">
         {/* Header */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-budget-brand to-budget-accent rounded-xl flex items-center justify-center shadow-lg">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-12 h-12 shrink-0 bg-gradient-to-br from-budget-brand to-budget-accent rounded-xl flex items-center justify-center shadow-lg">
               <Smartphone className="w-6 h-6 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="font-bold text-gray-900 text-base sm:text-lg">
                 Install Budget Cabs App
               </h3>
@@ -140,8 +145,9 @@ export default function PWAInstallPrompt() {
             </div>
           </div>
           <button
+            type="button"
             onClick={handleDismiss}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 -mt-1 -mr-1"
+            className="text-gray-400 hover:text-gray-600 transition-colors shrink-0 rounded-lg p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label="Dismiss"
           >
             <X className="w-5 h-5" />
@@ -167,12 +173,14 @@ export default function PWAInstallPrompt() {
         {/* Action Buttons */}
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={handleDismiss}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
           >
             Maybe Later
           </button>
           <button
+            type="button"
             onClick={handleInstallClick}
             className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-budget-brand to-budget-accent hover:from-budget-brand/90 hover:to-budget-accent/90 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
           >

@@ -6,6 +6,7 @@ import Script from "next/script";
 import "./globals.css";
 import EnvWarningBanner from "@/components/EnvWarningBanner";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -341,6 +342,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <EnvWarningBanner />
+        <RegisterServiceWorker />
         <PWAInstallPrompt />
         {children}
         <SpeedInsights />

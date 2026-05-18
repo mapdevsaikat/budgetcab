@@ -21,7 +21,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ children, isOpen, onClose, cl
             {/* Overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/20 z-[9998] transition-opacity"
+                    className="fixed inset-0 z-[9998] bg-[#180808]/55 backdrop-blur-[2px] transition-opacity"
                     onClick={onClose}
                 />
             )}
@@ -29,13 +29,12 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ children, isOpen, onClose, cl
             {/* Sheet */}
             <div
                 className={cn(
-                    "fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-[9999] transition-transform duration-300 ease-out",
-                    "max-h-[80vh] overflow-y-auto",
+                    "fixed bottom-0 left-0 right-0 z-[9999] max-h-[80vh] overflow-y-auto rounded-t-3xl border-t border-white/25 bg-white/[0.97] shadow-[0_-28px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-transform duration-300 ease-out",
                     isOpen ? "translate-y-0" : "translate-y-full",
                     className
                 )}
             >
-                <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-4" />
+                <div className="mx-auto my-4 h-1.5 w-12 rounded-full bg-stone-400/70" />
                 <div className="px-6 pb-8">
                     {children}
                 </div>

@@ -117,15 +117,11 @@ export default function WelcomePage() {
 
   return (
     <div
-      className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden"
+      className="min-h-screen w-full flex flex-col items-center justify-center lg:justify-start relative isolate pt-[max(2.75rem,calc(env(safe-area-inset-top,0px)+1.5rem))] pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)] md:pt-10 lg:pt-12 xl:pt-14 lg:pb-8"
       style={{
         minHeight: '100dvh',
         width: '100%',
         maxWidth: '100vw',
-        paddingTop: 'max(2rem, calc(env(safe-area-inset-top, 0px) + 2rem))',
-        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0.5rem))',
-        paddingLeft: 'env(safe-area-inset-left, 0px)',
-        paddingRight: 'env(safe-area-inset-right, 0px)',
       }}
     >
       {/* Midnight expressway: depth without purple-gradient cliché */}
@@ -144,7 +140,7 @@ export default function WelcomePage() {
       />
 
       <motion.div
-        className="relative z-10 w-full max-w-4xl px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col items-center justify-center py-4 sm:py-6 md:py-8 overflow-y-auto scrollable-container"
+        className="relative z-10 w-full max-w-full lg:max-w-6xl xl:max-w-7xl px-3 sm:px-4 md:px-8 lg:px-10 xl:px-12 flex flex-col items-center lg:items-stretch py-4 sm:py-6 md:py-8 overflow-y-auto scrollable-container"
         style={{
           maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))',
         }}
@@ -152,59 +148,90 @@ export default function WelcomePage() {
         initial="hidden"
         animate="show"
       >
-        <motion.div
-          className="flex flex-col items-center space-y-2 sm:space-y-3 flex-shrink-0 mt-4 sm:mt-6 md:mt-8"
-          variants={itemVariants}
-        >
-          <div className="relative">
-            <div
-              className="absolute inset-0 rounded-2xl blur-xl scale-80 opacity-90"
-              style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.65), rgba(220,38,38,0.35))' }}
-            />
-            <motion.div
-              className="relative bg-white/[0.97] backdrop-blur-md p-2 sm:p-3 md:p-4 rounded-2xl sm:rounded-3xl shadow-2xl border border-white/45"
-              whileHover={prefersReducedMotion ? undefined : { scale: 1.02 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-            >
-              <img
-                src="/android-chrome-192x192.png"
-                alt="budgetcab Logo"
-                className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 lg:w-24 lg:h-24 object-contain"
+        <div className="w-full flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-x-12 xl:gap-x-16 lg:gap-y-8 lg:items-start">
+          <motion.div
+            className="flex flex-col items-center lg:items-start space-y-5 sm:space-y-6 md:space-y-7 flex-shrink-0 mt-2 sm:mt-3 md:mt-4 lg:mt-0 lg:pr-2"
+            variants={itemVariants}
+          >
+            <div className="relative pt-1 lg:pt-0">
+              {/* Bright mobile “app icon” plate — toned down from md+ so it doesn’t read as a phone notch */}
+              <div
+                className="absolute inset-0 rounded-2xl -z-10 scale-90 opacity-90 blur-xl sm:blur-xl md:opacity-45 md:blur-lg md:scale-[0.92]"
+                style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.65), rgba(220,38,38,0.35))' }}
               />
-            </motion.div>
-          </div>
-
-          <div className="text-center space-y-1 px-4 sm:px-6 md:px-8">
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-white leading-[0.95] tracking-wide uppercase">
-              <span className="text-white">Budget</span>
-              <span className="text-budget-warn"> Cab</span>
-              <span className="text-white/95">s</span>
-            </h1>
-            <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-white/85">
-              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-300/90" />
-              <p className="text-xs sm:text-sm md:text-base font-medium tracking-wide">Affordable & Reliable</p>
-              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-300/90" />
+              <motion.div
+                className="relative border backdrop-blur-md p-3 sm:p-3.5 md:p-2.5 lg:p-3 rounded-2xl sm:rounded-3xl md:rounded-xl lg:rounded-2xl shadow-2xl max-md:bg-white/[0.97] max-md:border-white/45 md:bg-white/[0.09] md:border-white/25 md:shadow-lg"
+                whileHover={prefersReducedMotion ? undefined : { scale: 1.02 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+              >
+                <img
+                  src="/android-chrome-192x192.png"
+                  alt="budgetcab Logo"
+                  className="w-14 h-14 sm:w-16 sm:h-16 md:w-[4.5rem] md:h-[4.5rem] lg:w-24 lg:h-24 object-contain"
+                />
+              </motion.div>
             </div>
-          </div>
-        </motion.div>
+
+            <div className="text-center lg:text-left space-y-1 px-4 sm:px-6 md:px-8 lg:px-0 w-full">
+              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-white leading-[0.95] tracking-wide uppercase">
+                <span className="text-white">Budget</span>
+                <span className="text-budget-warn"> Cab</span>
+                <span className="text-white/95">s</span>
+              </h1>
+              <div className="flex items-center justify-center lg:justify-start gap-1.5 sm:gap-2 text-white/85">
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-300/90 shrink-0" />
+                <p className="text-xs sm:text-sm md:text-base font-medium tracking-wide">Affordable & Reliable</p>
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-300/90 shrink-0" />
+              </div>
+            </div>
+
+            <motion.div
+              className="text-center lg:text-left space-y-2 max-w-2xl lg:max-w-none w-full mb-5 sm:mb-7 md:mb-9 lg:mb-0 px-4 sm:px-6 md:px-8 lg:px-0"
+              variants={itemVariants}
+            >
+              <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-teal-300/90 font-semibold">
+                Nashik • Mumbai • Pune
+              </p>
+              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-semibold text-white/95 leading-snug">
+                Nashik taxi & airport transfer
+              </h2>
+              <p className="text-xs sm:text-sm md:text-base lg:text-white/80 max-w-md lg:max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                Intercity routes, airport runs, Malegaon, and sharing cabs — book in a few taps.
+              </p>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="hidden lg:block w-full min-w-0 lg:row-span-1 lg:self-center"
+            {...revealProps}
+          >
+            <div className="grid grid-cols-5 gap-2.5 xl:gap-3">
+              {features.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <motion.div
+                    key={index}
+                    className="bg-white/10 backdrop-blur-md rounded-lg xl:rounded-xl p-3 aspect-square border border-white/20 shadow-md hover:bg-white/[0.14] transition-colors flex flex-col items-center justify-center text-center"
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+                    whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-10%' }}
+                    transition={{ delay: index * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    whileHover={prefersReducedMotion ? undefined : { y: -4 }}
+                  >
+                    <div className={`w-10 h-10 xl:w-11 xl:h-11 ${feature.bgColor} rounded-lg flex items-center justify-center mb-2`}>
+                      <Icon className="w-5 h-5 xl:w-6 xl:h-6 text-white" />
+                    </div>
+                    <h3 className="text-[11px] xl:text-xs font-bold text-white mb-1">{feature.title}</h3>
+                    <p className="text-[10px] text-white/80 leading-tight">{feature.description}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </div>
 
         <motion.div
-          className="text-center space-y-2 max-w-2xl flex-shrink-0 mb-5 sm:mb-7 md:mb-9 px-4 sm:px-6 md:px-8"
-          variants={itemVariants}
-        >
-          <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-teal-300/90 font-semibold">
-            Nashik • Mumbai • Pune
-          </p>
-          <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-white/95 leading-snug">
-            Nashik taxi & airport transfer
-          </h2>
-          <p className="text-xs sm:text-sm text-white/75 max-w-md mx-auto leading-relaxed">
-            Intercity routes, airport runs, Malegaon, and sharing cabs — book in a few taps.
-          </p>
-        </motion.div>
-
-        <motion.div
-          className="w-full px-4 sm:px-4 md:px-4 max-w-[400px] sm:max-w-[500px] md:max-w-[600px] lg:max-w-5xl flex-shrink-0"
+          className="w-full px-4 sm:px-4 md:px-4 max-w-[400px] sm:max-w-[500px] md:max-w-[600px] lg:max-w-none flex-shrink-0 lg:mt-2"
           {...revealProps}
         >
           <div className="lg:hidden relative">
@@ -284,33 +311,10 @@ export default function WelcomePage() {
               ))}
             </div>
           </div>
-
-          <div className="hidden lg:grid lg:grid-cols-5 gap-2.5">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <motion.div
-                  key={index}
-                  className="bg-white/10 backdrop-blur-md rounded-lg p-3 aspect-square border border-white/20 shadow-md hover:bg-white/[0.14] transition-colors flex flex-col items-center justify-center text-center"
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
-                  whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-10%' }}
-                  transition={{ delay: index * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                  whileHover={prefersReducedMotion ? undefined : { y: -4 }}
-                >
-                  <div className={`w-10 h-10 ${feature.bgColor} rounded-lg flex items-center justify-center mb-2`}>
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-xs font-bold text-white mb-1">{feature.title}</h3>
-                  <p className="text-[10px] text-white/80 leading-tight">{feature.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
         </motion.div>
 
         <motion.div
-          className="w-full max-w-md px-2 sm:px-4 space-y-2 sm:space-y-3 flex-shrink-0 mt-5 sm:mt-7 md:mt-9"
+          className="w-full max-w-md lg:max-w-2xl px-2 sm:px-4 space-y-2 sm:space-y-3 flex-shrink-0 mt-5 sm:mt-7 md:mt-9 lg:mt-10 mx-auto lg:mx-0"
           variants={itemVariants}
         >
           <motion.button
