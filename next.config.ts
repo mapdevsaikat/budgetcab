@@ -22,11 +22,11 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com",
               "style-src 'self' 'unsafe-inline' https://api.maptiler.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://api.maptiler.com https://*.maptiler.com https://*.supabase.co https://api.mapbox.com https://quantaroute.com https://api.quantaroute.com",
+              "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://api.maptiler.com https://*.maptiler.com https://*.supabase.co https://api.mapbox.com https://quantaroute.com https://api.quantaroute.com",
               "frame-src 'self' https://www.google.com https://*.google.com https://*.googleapis.com",
               "worker-src 'self' blob:",
             ].join('; ')

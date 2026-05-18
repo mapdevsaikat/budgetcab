@@ -48,3 +48,5 @@ context.md
 docs/
 docs/*
 docs/migrations/*
+.cursor/
+.cursorindexingignore

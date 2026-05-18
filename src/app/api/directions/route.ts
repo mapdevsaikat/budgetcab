@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import { apiForbiddenUnlessBrowserOrigin } from '@/lib/api-request-guard';
 
 export async function POST(request: Request) {
+    const forbidden = apiForbiddenUnlessBrowserOrigin(request);
+    if (forbidden) return forbidden;
+
     const body = await request.json();
     const { pickup, drop } = body;
 
@@ -9,6 +13,9 @@ export async function POST(request: Request) {
     }
 
     const mapboxToken = process.env.MAPBOX_API_KEY;
+    if (!mapboxToken) {
+        return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
+    }
 
     try {
         const response = await fetch(

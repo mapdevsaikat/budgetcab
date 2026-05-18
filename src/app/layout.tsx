@@ -1,27 +1,33 @@
 import type { Metadata, Viewport } from "next";
 import { getSiteUrl, shouldBlockIndexing } from "@/lib/site-url";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bebas_Neue, Outfit, IBM_Plex_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import EnvWarningBanner from "@/components/EnvWarningBanner";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const bebasNeue = Bebas_Neue({
+  weight: "400",
+  variable: "--font-bebas",
+  subsets: ["latin"],
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  weight: ["400", "600"],
+  variable: "--font-mono-ibm",
   subsets: ["latin"],
 });
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  viewportFit: 'cover',
+  viewportFit: "cover",
 };
 
 const defaultTitle =
@@ -214,8 +220,8 @@ export default function RootLayout({
         },
         "geo": {
           "@type": "GeoCoordinates",
-          "latitude": "19.9918583",
-          "longitude": "73.7937136"
+          "latitude": 19.9918583,
+          "longitude": 73.7937136
         },
         "url": baseUrl,
         "openingHoursSpecification": {
@@ -269,8 +275,8 @@ export default function RootLayout({
         },
         "geo": {
           "@type": "GeoCoordinates",
-          "latitude": "19.1136",
-          "longitude": "72.8697"
+          "latitude": 19.1136,
+          "longitude": 72.8697
         },
         "url": baseUrl,
         "openingHoursSpecification": {
@@ -313,7 +319,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${outfit.variable} ${bebasNeue.variable} ${ibmPlexMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         {/* Google Analytics */}
